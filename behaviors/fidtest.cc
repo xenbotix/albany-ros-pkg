@@ -2,7 +2,7 @@
 #ifndef INCLUDED_FIDTEST_h_
 #define INCLUDED_FIDTEST_h_
 
-// This is the example result for 
+#include "Shared/RobotInfo.h"
 #include "Behaviors/StateMachine.h"
 #include "Events/TextMsgEvent.h"
 
@@ -11,7 +11,7 @@ class fidtest : public BehaviorBase {
 
 public:
 	//! default constructor, use type name as instance name
-	fidtest():BehaviorBase("fidtest","fidtest"){}
+	fidtest():BehaviorBase("fidtest"){}
 
     // Start up listeners for timers, sensors, etc
     virtual void DoStart() {
@@ -45,15 +45,6 @@ private:
 	fidtest& operator=(const fidtest&); //!< don't call (assignment operator)
 };
 
-/*! @file
- * @brief Defines CLASSNAME, which DESCRIPTION
- * @author YOURNAMEHERE (Creator)
- *
- * $Author$
- * $Name$
- * $Revision$
- * $State$
- * $Date$
- */
+REGISTER_BEHAVIOR(fidtest);
 
 #endif
