@@ -19,6 +19,7 @@ using namespace RobotInfo;
 #  define TGT_HAS_CAMERA 1
 #  define TGT_HAS_3D_ARMS 2
 #  define TGT_HAS_HEAD 1
+#  define TGT_HAS_FACE
 #endif
 
 //! Contains information about an iRobot Create, such as number of joints, LEDs, etc.
@@ -76,11 +77,11 @@ namespace NelsonInfo {
 	
 	const unsigned PIDJointOffset = 0; //!< The beginning of the PID Joints
 	const unsigned WheelOffset = PIDJointOffset;
-    const unsigned ArmOffset = WheelOffset+NumWheels;
-    const unsigned LeftArmOffset = ArmOffset;
-    const unsigned RightArmOffset = ArmOffset + JointsPerArm;
-	const unsigned HeadOffset  = ArmOffset+NumArmJoints;   //!< the offset of the beginning of the head joints, add TPROffset_t to get specific joint
-
+	const unsigned ArmOffset = WheelOffset+NumWheels;
+	const unsigned LeftArmOffset = ArmOffset;
+	const unsigned RightArmOffset = ArmOffset + JointsPerArm;
+	const unsigned HeadOffset = ArmOffset+NumArmJoints;   //!< the offset of the beginning of the head joints, add TPROffset_t to get specific joint
+    
 	const unsigned LEDOffset   = PIDJointOffset + NumPIDJoints;
 	
 	const unsigned ModeOffset = LEDOffset + NumLEDs;
@@ -89,38 +90,33 @@ namespace NelsonInfo {
 	const unsigned CameraFrameOffset = BaseFrameOffset + 1; //!< Use with kinematics to refer to camera reference frame
 
 	//! The offsets of appendages with pan (heading), tilt (elevation), note that this should be added to HeadOffset, otherwise use HeadOffset_t (#HeadPanOffset and #HeadTiltOffset)
-	//enum TPROffset_t {
-	//	PanOffset = 0,      //!< pan/heading (horizontal)
-	//	TiltOffset, //!< tilt/elevation (vertical)
-	//	NodOffset = TiltOffset //!< replicated tilt (could be left undefined instead...)
-	//};    3/28 MEF
-    enum TPROffset_t {
+	enum TPROffset_t {
 		TiltOffset = 0, //!< tilt/elevation (vertical)
 		PanOffset,      //!< pan/heading (horizontal)
 		RollOffset,      //!< roll (rotational)
 		NodOffset=RollOffset       //!< nod (second tilt)
 	};
 	
-    enum ArmOffset_t {      // 3/28/10 MEF
-        ArmShoulderPitchOffset=ArmOffset,
+	enum ArmOffset_t {      // 3/28/10 MEF
+        ArmShoulderPitchOffset=0,
         ArmShoulderOffset,
         ArmElbowOffset,
         GripperOffset
-    };
+	};
 
 	//! These are 'absolute' offsets for the neck joints, don't need to add to HeadOffset like TPROffset_t values do
 	enum HeadOffset_t {
 		HeadPanOffset = HeadOffset,      //!< pan/heading (horizontal)
 		HeadTiltOffset, //!< tilt/elevation (vertical)
-        HeadNodOffset,
-        EyeTiltOffset,
-        EyePanLeftOffset,
-        EyePanRightOffset,
-        EyeLidOffset,
-        TopLipOffset,
-        BottomLipOffset,
-        LeftEyebrowOffset,
-        RightEyebrowOffset
+		HeadNodOffset,
+		EyeTiltOffset,
+	    EyePanLeftOffset,
+		EyePanRightOffset,
+		EyeLidOffset,
+		TopLipOffset,
+		BottomLipOffset,
+		LeftEyebrowOffset,
+		RightEyebrowOffset
 	};
 
 	enum WheelOffset_t {
@@ -135,11 +131,11 @@ namespace NelsonInfo {
 		PowerGreenLEDOffset,
 		PlayLEDOffset,
 		AdvanceLEDOffset,
-        PanLEDOffset,           // 3/28/10 MEF
-        TiltLEDOffset,
-        NodLEDOffset,
-        LeftCheekLEDOffset,
-        RightCheekLEDOffset 
+		PanLEDOffset,           // 3/28/10 MEF
+		TiltLEDOffset,
+		NodLEDOffset,
+		LeftCheekLEDOffset,
+		RightCheekLEDOffset 
 	};
 
 	const LEDOffset_t RedLEDOffset = PowerRedLEDOffset;
@@ -160,11 +156,11 @@ namespace NelsonInfo {
 	const LEDBitMask_t PlayLEDMask = 1<<(PlayLEDOffset-LEDOffset); //!< mask corresponding to YellowLEDOffset
 	const LEDBitMask_t AdvanceLEDMask = 1<<(AdvanceLEDOffset-LEDOffset); //!< mask corresponding to RedLEDOffset
 
-    const LEDBitMask_t PanLEDMask = 1<<(PanLEDOffset-LEDOffset);  // 3/28/10 MEF
-    const LEDBitMask_t TiltLEDMask = 1<<(TiltLEDOffset-LEDOffset);
-    const LEDBitMask_t NodLEDMask = 1<<(NodLEDOffset-LEDOffset);
-    const LEDBitMask_t LeftCheekLEDMask = 1<<(LeftCheekLEDOffset-LEDOffset);
-    const LEDBitMask_t RightCheekLEDMask = 1<<(RightCheekLEDOffset-LEDOffset);
+	const LEDBitMask_t PanLEDMask = 1<<(PanLEDOffset-LEDOffset);  // 3/28/10 MEF
+	const LEDBitMask_t TiltLEDMask = 1<<(TiltLEDOffset-LEDOffset);
+	const LEDBitMask_t NodLEDMask = 1<<(NodLEDOffset-LEDOffset);
+	const LEDBitMask_t LeftCheekLEDMask = 1<<(LeftCheekLEDOffset-LEDOffset);
+	const LEDBitMask_t RightCheekLEDMask = 1<<(RightCheekLEDOffset-LEDOffset);
 
 	//! LEDs for the face panel (all FaceLEDPanelMask<<(0:NumFacePanelLEDs-1) entries)
 	const LEDBitMask_t FaceLEDMask = 0;
@@ -267,10 +263,6 @@ namespace NelsonInfo {
 		IR_BASE_GREEN_FORCE=246,
 		IR_BASE_RED_GREEN_FORCE=254
 	};
-	/*const unsigned IR_BASE_MASK=240;
-	const unsigned IR_BASE_RED_MASK=8;
-	const unsigned IR_BASE_GREEN_MASK=4;
-	const unsigned IR_BASE_FORCE_MASK=2;*/
 	
 	enum ChargingState_t {
 		CHARGING_OFF,
@@ -311,24 +303,22 @@ namespace NelsonInfo {
 		"ModeState",
 		NULL
 	};
-
 	//@}
-
 
 	//! Names for each of the outputs
 	const char* const outputNames[NumReferenceFrames+1] = {
 		"WHEEL:L",
 		"WHEEL:R",
-        "ARM_L:pitch","ARM_L:shldr","ARM_L:elbow","ARM_L:gripper",
-        "ARM_R:pitch","ARM_R:shldr","ARM_R:elbow","ARM_R:gripper",
-        "NECK:pan","NECK:tilt","NECK:nod",
-        "HEAD:eyes","HEAD:leye","HEAD:reye","HEAD:eyel",
-        "HEAD:tlip","HEAD:blip","HEAD:lbrow","HEAD:rbrow",
+		"ARM_L:pitch","ARM_L:shldr","ARM_L:elbow","ARM_L:gripper",
+		"ARM_R:pitch","ARM_R:shldr","ARM_R:elbow","ARM_R:gripper",
+		"NECK:pan","NECK:tilt","NECK:nod",
+		"HEAD:eyes","HEAD:leye","HEAD:reye","HEAD:eyel",
+		"HEAD:tlip","HEAD:blip","HEAD:lbrow","HEAD:rbrow",
 		"LED:Power(Red)",
 		"LED:Power(Green)",
 		"LED:Play",
 		"LED:Advance",
-        "LED:Pan","LED:Tilt","LED:Nod","LED:lcheek","LED:rcheek",
+		"LED:Pan","LED:Tilt","LED:Nod","LED:lcheek","LED:rcheek",
 		"DesiredMode",
 		"BaseFrame",
 		"CameraFrame",
@@ -347,30 +337,30 @@ namespace NelsonInfo {
 
 	//! This table holds the default PID values for each joint.  see PIDMC
 	const float DefaultPIDs[NumPIDJoints][3] = {
-      {1,0,0},
-	  {1,0,0},  
-      {32,32,0},{32,32,0},{32,32,0},{32,32,0},
-      {32,32,0},{32,32,0},{32,32,0},{32,32,0},
-      {32,32,0},{32,32,0},{32,32,0},
-      {32,32,0},{32,32,0},{32,32,0},{32,32,0},
-      {32,32,0},{32,32,0},{32,32,0},{32,32,0},
+		{1,0,0},
+		{1,0,0},  
+		{32,32,0},{32,32,0},{32,32,0},{32,32,0},
+		{32,32,0},{32,32,0},{32,32,0},{32,32,0},
+		{32,32,0},{32,32,0},{32,32,0},
+		{32,32,0},{32,32,0},{32,32,0},{32,32,0},
+		{32,32,0},{32,32,0},{32,32,0},{32,32,0},
 	};
 	
 	//!These values are our recommended maximum joint velocities, in rad/ms
 	const float MaxOutputSpeed[NumOutputs] = {
-        // wheels
+		// wheels
 		0,0,
-        // servos
+		// servos
 		0,0,0,0,
 		0,0,0,0,
-        0,0,0,
-        0,0,0,0,
-        0,0,0,0,
-        // leds
-        0,
-        0,
-        0,
-        0,
+		0,0,0,
+		0,0,0,0,
+		0,0,0,0,
+		// leds
+		0,
+		0,
+		0,
+		0,
 		0,0,0,0,
 		0
 	};
@@ -387,11 +377,11 @@ namespace NelsonInfo {
 		{
 			{ -1 , 1 },
 			{ -1 , 1 },
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
+			{-0.5,2.75},{-0.05,1.57},{0,2},{-1,1},
+			{-0.5,2.75},{-0.05,1.57},{0,2},{-1,1},
+			{-1,1},{-1,1},{-1,1},
+			{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
+			{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
 			{  0 , 1 },
 			{  0 , 1 },
 			{  0 , 1 },
@@ -406,11 +396,11 @@ namespace NelsonInfo {
 		{
 			{ -1 , 1 },
 			{ -1 , 1 },
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
-            {RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
+			{-0.5,2.75},{-0.05,1.57},{0,2},{-1,1},
+			{-0.5,2.75},{-0.05,1.57},{0,2},{-1,1},
+			{-1,1},{-1,1},{-1,1},
+			{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
+			{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},{RAD(-100),RAD(100)},
 			{  0 , 1 },
 			{  0 , 1 },
 			{  0 , 1 },
@@ -419,21 +409,10 @@ namespace NelsonInfo {
 			{ MODE_PASSIVE, MODE_SAFE }
 		};
 
-#ifdef __RI_RAD_FLAG
-#undef RAD
-#undef __RI_RAD_FLAG
-#endif
+	#ifdef __RI_RAD_FLAG
+	#undef RAD
+	#undef __RI_RAD_FLAG
+	#endif
 }
-
-/*! @file
- * @brief Defines some capabilities of the iRobot Create robots
- * @author ejt (Creator)
- *
- * $Author: dst $
- * $Name:  $
- * $Revision: 1.33 $
- * $State: Exp $
- * $Date: 2009/12/24 00:02:52 $
- */
 
 #endif
