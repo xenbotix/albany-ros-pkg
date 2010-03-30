@@ -1,7 +1,7 @@
 //-*-c++-*-
 #ifdef TGT_NELSON
 
-/* Walk With Me! - A Nelson Demo
+/* A Test of the SimpleArmMC
  * Copyright 2010 Michael E. Ferguson - SUNY Albany Robotics
  */
 
@@ -42,8 +42,9 @@ public:
         volatile float pitch = state->outputs[NelsonInfo::LeftArmOffset+NelsonInfo::ArmShoulderPitchOffset];
         volatile float shoulder = state->outputs[NelsonInfo::LeftArmOffset+NelsonInfo::ArmShoulderOffset];
         volatile float elbow = state->outputs[NelsonInfo::LeftArmOffset+NelsonInfo::ArmElbowOffset];
+        volatile float gripper = state->outputs[NelsonInfo::LeftArmOffset+NelsonInfo::GripperOffset];
         MMAccessor<SimpleArmMC> arm(arm_id);
-        arm.mc()->setJoints(pitch, shoulder, elbow, 0);
+        arm.mc()->setJoints(pitch, shoulder, elbow, gripper);
     }
 
     virtual void DoStop(){
