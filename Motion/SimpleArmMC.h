@@ -11,6 +11,7 @@
 class SimpleArmMC : public MotionCommand {
 public:
   //! Constructor, defaults to all joints to current value in ::state (i.e. calls takeSnapshot() automatically)
+  SimpleArmMC();
   SimpleArmMC(int index);
 	
   //! Destructor
@@ -52,7 +53,7 @@ public:
   /*! @param i joint offset relative to HeadOffset (i.e. one of TPROffset_t)
    *  @param value the value to be assigned to join @a i, in radians */
   void setJointValue(unsigned int i, float value) {
-#ifdef TGT_HAS_HEAD
+#ifdef TGT_HAS_SIMPLE_ARMS
     if(!ensureValidJoint(i))
       return;
     armTargets[i]=clipAngularRange(ArmOffset+(JointsPerArm*ArmIndex)+i,value);
@@ -70,6 +71,8 @@ public:
   }
 	
   //@}
+
+  void setIndex(int index);
 	
 public:	
   //!@name Inherited:

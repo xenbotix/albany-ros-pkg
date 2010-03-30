@@ -14,15 +14,22 @@
 #include <memory>
 #include <cmath>
 
+SimpleArmMC::SimpleArmMC() : MotionCommand(), dirty(true){
+    SimpleArmMC(0);
+}
+
 SimpleArmMC::SimpleArmMC(int index) : MotionCommand(), dirty(true){
-	setWeight(1);
+	ArmIndex = (index - ArmOffset)/JointsPerArm;
+    setWeight(1);
 	defaultMaxSpeed();
 	takeSnapshot();
-    ArmIndex = index;
+}
+void SimpleArmMC::setIndex(int index){
+    ArmIndex = (index-ArmOffset)/JointsPerArm;
 }
 
 void SimpleArmMC::freezeMotion() {
-#ifdef TGT_HAS_ARMS
+#ifdef TGT_HAS_SIMPLE_ARMS
 	for(unsigned int i=0; i<JointsPerArm; i++)
 		armTargets[i]=armCmds[i].value;
 	dirty=false;
@@ -30,7 +37,7 @@ void SimpleArmMC::freezeMotion() {
 }
 
 void SimpleArmMC::takeSnapshot() {
-#ifdef TGT_HAS_ARMS
+#ifdef TGT_HAS_SIMPLE_ARMS
 	for(unsigned int i=0; i<JointsPerArm; i++)
 		armTargets[i]=armCmds[i].value=state->outputs[ArmOffset+(JointsPerArm*ArmIndex)+i];
 	dirty=true;
@@ -38,14 +45,14 @@ void SimpleArmMC::takeSnapshot() {
 }
 
 void SimpleArmMC::defaultMaxSpeed(float x/*=1*/) {
-#ifdef TGT_HAS_ARMS
-	for(unsigned int x=0; x<JointsPerArm; x++)
-		maxSpeed[x]=0;
+#ifdef TGT_HAS_SIMPLE_ARMS
+	for(unsigned int i=0; i<JointsPerArm; i++)
+		maxSpeed[i]=0;
 #endif
 }
 
 void SimpleArmMC::setWeight(float w) {
-#ifdef TGT_HAS_ARMS
+#ifdef TGT_HAS_SIMPLE_ARMS
 	for(unsigned int x=0; x<JointsPerArm; x++)
 		armCmds[x].weight=w;
 	markDirty();
@@ -53,21 +60,21 @@ void SimpleArmMC::setWeight(float w) {
 }
 
 void SimpleArmMC::setJoints(float pitch, float shoulder, float elbow, float grip){
-#ifdef TGT_HAS_ARMS
+#ifdef TGT_HAS_SIMPLE_ARMS
     const char* n = NelsonInfo::outputNames[NelsonInfo::ArmOffset+(ArmIndex*NelsonInfo::JointsPerArm)+NelsonInfo::ArmShoulderPitchOffset];
     unsigned int i = capabilities.findOutputOffset(n);
 	if(i!=-1U)
 		armTargets[0]=clipAngularRange(i,pitch);
     n = NelsonInfo::outputNames[NelsonInfo::ArmOffset+(ArmIndex*NelsonInfo::JointsPerArm)+NelsonInfo::ArmShoulderOffset];
-    unsigned int i = capabilities.findOutputOffset(n);
+    i = capabilities.findOutputOffset(n);
 	if(i!=-1U)
 		armTargets[1]=clipAngularRange(i,shoulder);
     n = NelsonInfo::outputNames[NelsonInfo::ArmOffset+(ArmIndex*NelsonInfo::JointsPerArm)+NelsonInfo::ArmElbowOffset];
-    unsigned int i = capabilities.findOutputOffset(n);
+    i = capabilities.findOutputOffset(n);
 	if(i!=-1U)
 		armTargets[2]=clipAngularRange(i,elbow);
     n = NelsonInfo::outputNames[NelsonInfo::ArmOffset+(ArmIndex*NelsonInfo::JointsPerArm)+NelsonInfo::GripperOffset];
-    unsigned int i = capabilities.findOutputOffset(n);
+    i = capabilities.findOutputOffset(n);
 	if(i!=-1U)
 		armTargets[3]=clipAngularRange(i,grip);
     markDirty();
@@ -78,7 +85,7 @@ int SimpleArmMC::updateOutputs() {
 	int tmp=isDirty();
 	if(tmp) {
 		dirty=false;
-#ifdef TGT_HAS_HEAD
+#ifdef TGT_HAS_SIMPLE_ARMS
 		for(unsigned int i=0; i<JointsPerArm; i++) {
 			if(maxSpeed[i]<=0) {
 				armCmds[i].value=armTargets[i];
@@ -109,7 +116,7 @@ int SimpleArmMC::updateOutputs() {
 }
 
 int SimpleArmMC::isAlive() {
-#ifndef TGT_HAS_ARMS
+#ifndef TGT_HAS_SIMPLE_ARMS
 	return false;
 #else
 	return true;
@@ -118,14 +125,14 @@ int SimpleArmMC::isAlive() {
 
 void SimpleArmMC::markDirty() {
 	dirty=true;
-#ifdef TGT_HAS_ARMS
+#ifdef TGT_HAS_SIMPLE_ARMS
 	for(unsigned int i=0; i<JointsPerArm; i++)
 		armCmds[i].value=motman->getOutputCmd(i+ArmOffset+(ArmIndex*JointsPerArm)).value;
 #endif
 }
 
 bool SimpleArmMC::ensureValidJoint(unsigned int& i) {
-#ifndef TGT_HAS_ARMS
+#ifndef TGT_HAS_SIMPLE_ARMS
 	serr->printf("ERROR: SimpleArmMC received a joint index of %d on an armless target.\n",i);
 #else
 	if(i<JointsPerArm)
