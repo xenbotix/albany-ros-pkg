@@ -117,6 +117,7 @@
 	        <!--======== 005 ========-->
 		    <key>005</key>  <dict>
 			    <key>LED</key>                <string></string>
+				<key>InvertRotation</key>     <true/>
 		    </dict>
 		
 		    <!--======== 006 ========-->
@@ -127,11 +128,13 @@
 		    <!--======== 007 ========-->
 		    <key>007</key>  <dict>
 			    <key>LED</key>                <string></string>
+				<key>InvertRotation</key>     <true/>
 		    </dict>
 		
 		    <!--======== 008 ========-->
 		    <key>008</key>  <dict>
 			    <key>LED</key>                <string></string>
+				<key>InvertRotation</key>     <true/>
 		    </dict>
 		
 		    <!--======== 009 ========-->
@@ -142,6 +145,7 @@
 		    <!--======== 010 ========-->
 		    <key>010</key>  <dict>
 			    <key>LED</key>                <string></string>
+				<key>InvertRotation</key>     <true/>
 		    </dict>
 		
 		    <!--======== 011 ========-->
@@ -206,7 +210,10 @@
 <!--======== Sensors ========-->
 <!--Settings for the loading of sensor values-->
 <key>Sensors</key>         <dict>
-	<key>Sources</key>    <array><string>Create</string></array>
+	<key>Sources</key>    <array>
+		<string>Dynamixel</string>
+        <string>Create</string>
+    </array>
 </dict>
 
 <key>WaitForSensors</key> <false/>
