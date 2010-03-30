@@ -17,7 +17,7 @@ using namespace RobotInfo;
 #  define TGT_HAS_BUTTONS 15
 #  define TGT_HAS_LEDS 4
 #  define TGT_HAS_CAMERA 1
-#  define TGT_HAS_3D_ARMS 2
+#  define TGT_HAS_SIMPLE_ARMS 2
 #  define TGT_HAS_HEAD 1
 #  define TGT_HAS_FACE
 #endif
