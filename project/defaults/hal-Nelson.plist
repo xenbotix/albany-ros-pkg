@@ -210,6 +210,7 @@
 <!--======== Sensors ========-->
 <!--Settings for the loading of sensor values-->
 <key>Sensors</key>         <dict>
+    <key>Framerate</key> <real>10</real>
 	<key>Sources</key>    <array>
 		<string>Dynamixel</string>
         <string>Create</string>
