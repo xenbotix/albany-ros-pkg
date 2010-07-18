@@ -1,0 +1,28 @@
+---
+port: /dev/ttyUSB1
+baud: 1000000
+sync: False
+usebase: False
+rate: 30
+dynamixels: {
+    "1": {name: r_shoulder_pitch},
+    "2": {name: r_shoulder},
+    "3": {name: r_elbow, invert: 1},
+    "4": {name: r_gripper, invert: 1},
+    "5": {name: l_shoulder_pitch, invert: 1},
+    "6": {name: l_shoulder, invert: 1},
+    "7": {name: l_elbow},
+    "8": {name: l_gripper},
+    "9": {name: head_pan, invert: 1, max: 100, min: -100}, 
+    "10": {name: head_tilt, neutral: 562, max: 30, min: -30},
+    "11": {name: head_tilt2, netural: 542, max: 20, min: -18},
+    "12": {name: eye_tilt, max: 100, min: -100},
+    "13": {name: r_eye_pan, max: 45, min: -45},
+    "14": {name: l_eye_pan, max: 45, min: -45},
+    "15": {name: eyelids},
+    "16": {name: top_lip, invert: 1, max: 30, min: -40},
+    "17": {name: bottom_lip, max: 30, min: -40},
+    "18": {name: r_eyebrow, max: 45, min: -45},
+    "19": {name: l_eyebrow, invert: 1, max: 45, min: -45}
+}
+

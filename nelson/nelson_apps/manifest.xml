@@ -1,0 +1,20 @@
+<package>
+  <description brief="nelson_apps">
+
+     nelson_apps
+
+  </description>
+  <author>Michael E. Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/nelson_apps</url>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="tf"/>
+  <depend package="nelson_common"/>
+
+</package>
+
+
