@@ -4,4 +4,5 @@
   <node name="arbotix" pkg="arbotix" type="arbotix-ros.py">
       <rosparam file="$(find nelson_common)/launch/nelson.yaml" command="load" />
   </node>
+  <node name="wakeup" pkg="nelson_common" type="wakeup.py" />
 </launch>
