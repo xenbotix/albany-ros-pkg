@@ -1,0 +1,14 @@
+<package>
+  <description brief="albany_video">
+    Launch files for video devices. 
+  </description>
+  <author>Michael E. Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/albany_video</url>
+  
+  <depend package="usb_cam"/>
+
+</package>
+
+
