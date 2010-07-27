@@ -9,7 +9,6 @@
 
   <depend package="usb_cam"/>
   <depend package="rospy"/>
-  <depend package="roscpp"/>
 
 </package>
 
