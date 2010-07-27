@@ -1,0 +1,17 @@
+<package>
+  <description brief="albany_common">
+
+     albany_common
+
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/albany_common</url>
+  <depend package="usb_cam"/>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+
+</package>
+
+
