@@ -7,8 +7,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/albany_common</url>
 
-  <depend package="usb_cam"/>
   <depend package="rospy"/>
+  <depend package="usb_cam"/>
+  <depend package="irobot_create_2_1"/>
 
 </package>
 

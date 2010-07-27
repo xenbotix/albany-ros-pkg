@@ -1,0 +1,7 @@
+<launch>
+  <!-- bring up a camera, create --> 
+  <include file="$(find albany_common)/launch/qc9000.launch">  
+  <node name="create" pkg="irobot_create_2_1" type="driver.py" />
+  <!-- TODO: bring up pan & tilt, PML, etc on an ArbotiX node />
+</launch>
+

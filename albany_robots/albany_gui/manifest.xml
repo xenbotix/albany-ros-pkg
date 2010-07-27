@@ -1,0 +1,14 @@
+<package>
+  <description brief="albany_gui">
+    A controller GUI for our robots.
+  </description>
+  <author>Michael E. Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/albany_gui</url>
+
+  <depend package="rospy"/>
+
+</package>
+
+
