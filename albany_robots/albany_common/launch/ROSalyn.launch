@@ -1,9 +1,17 @@
 <launch>
-  <!-- bring up a camera, create, arbotix, and static transform --> 
-  <include file="$(find albany_common)/launch/qc9000.launch">  
+  <!-- bring up a camera, create, arbotix -->
+  <include file="$(find albany_common)/launch/qc9000.launch" />  
   <node name="rosalyn_base" pkg="irobot_create_2_1" type="driver.py" />
-  <!-- TODO: bring up pan & tilt, PML, etc on an ArbotiX node />
-  <node pkg="tf" type="static_transform_publisher" name="rosalyn_cam_tf" 
-     args="0 0 1.27 -1.57 0 -1.57 base_link usb_cam 1" />
+  <node name="arbotix" pkg="arbotix" type="arbotix-ros.py">
+    <rosparam file="$(find albany_common)/launch/ROSalyn.yaml" command="load" />
+  </node>
+
+  <!-- TODO: Replace this with a dynamic TF broadcast using pan & tilt parameters -->
+  <node pkg="tf" type="static_transform_publisher" name="rosalyn_cam_tf" output="screen" 
+     args="0 0 1.27 -1.57 0 -1.57 base_link usb_cam 1" /> 
+  
+  <!-- Static transform for lidar -->
+  <node pkg="tf" type="static_transform_publisher" name="rosalyn_lidar_tf" output="screen" 
+    args="0 0 0.165 0 0 0 base_link base_laser 1" /> 
 </launch>
 
