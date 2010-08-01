@@ -1,8 +1,7 @@
 ---
 port: /dev/ttyUSB1
 baud: 1000000
-sync: False
-usebase: False
+use_sync: False
 rate: 30
 dynamixels: {
     "1": {name: r_shoulder_pitch},
