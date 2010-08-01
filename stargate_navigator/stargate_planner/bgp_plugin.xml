@@ -1,0 +1,7 @@
+<library path="lib/libstargate_planner">
+  <class name="StargatePlanner" type="stargate_planner::StargatePlanner" base_class_type="nav_core::BaseGlobalPlanner">
+    <description>
+      A simple planner for the Stargate topological navigation system.
+    </description>
+  </class>
+</library>
