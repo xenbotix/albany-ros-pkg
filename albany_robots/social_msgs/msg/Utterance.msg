@@ -1,6 +1,6 @@
 # in case robot were the speaker...
-int8 SELF=0
+string SELF="robot"
 
 Header header
-int8 speaker
+string speaker
 string utterance
