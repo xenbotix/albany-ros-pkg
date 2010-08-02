@@ -1,0 +1,6 @@
+# a point in space to look at
+geometry_msgs/PointStamped gaze_direction
+# how long to move there
+time transition_time
+---
+
