@@ -5,8 +5,7 @@
 
     <!-- TODO: configure this
     <node name="stargate_ar_pose" pkg="ar_pose" type="ar_multi" output="screen" >
-      <param name="marker_pattern_list" type="string" value="data/objects_office"/>
-      <param name="marker_width" type="double" value="135"/>
+      <param name="marker_pattern_list" type="string" value="$(find stargate_map_server)/objects_office"/>
       <param name="threshold" type="int" value="100"/>
     </node>-->
 
