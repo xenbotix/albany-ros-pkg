@@ -1,0 +1,5 @@
+#Helpful-100%
+cd /usr/local/Tekkotsu/tools/dynamixel_util/
+./dynamixel_util move 12 600
+./dynamixel_util move 13 600
+./dynamixel_util move 18 480
