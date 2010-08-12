@@ -4,7 +4,6 @@ rate: 15
 use_gp_lidar: true
 dynamixels: {
     "1": {name: head_pan},
-    "2": {name: head_tilt, max: 100, min: -100},
-    "3": {name: laser_pan}
+    "2": {name: head_tilt, max: 100, min: -100}
 }
 
