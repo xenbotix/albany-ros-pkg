@@ -15,5 +15,5 @@ rospy.init_node('wakeup')
 for servo, value in neck.items():
     rospy.wait_for_service(servo+'_setangle')
     s = rospy.ServiceProxy(servo+'_setangle',SetAngle)
-    s(value, 10)
+    s(value)
 

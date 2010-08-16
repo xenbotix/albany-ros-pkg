@@ -51,6 +51,6 @@ if __name__ == '__main__':
     r = rospy.Rate(30)
     while not rospy.is_shutdown():
         for servo in values.keys():
-            outputs[servo](values[servo], 50)
+            outputs[servo](values[servo])
         r.sleep()
 
