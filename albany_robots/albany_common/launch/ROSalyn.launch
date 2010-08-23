@@ -4,7 +4,7 @@
   <!-- bring up a camera, create, arbotix --> 
   <include file="$(find albany_common)/launch/qc9000.launch" />  
   <node name="rosalyn_base" pkg="irobot_create_2_1" type="driver.py" />
-  <node name="arbotix" pkg="arbotix" type="arbotix-ros.py">
+  <node name="arbotix" pkg="arbotix" type="arbotix-ros.py" output="screen">
     <rosparam file="$(find albany_common)/launch/ROSalyn.yaml" command="load" />
   </node>
 

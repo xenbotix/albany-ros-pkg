@@ -1,7 +1,9 @@
 ---
 port: /dev/ttyUSB1
 rate: 15
-use_gp_lidar: true
+sensors: {
+    "lidar": {type: lidar}
+}
 dynamixels: {
     "1": {name: head_pan},
     "2": {name: head_tilt, max_angle: 100, min_angle: -100}
