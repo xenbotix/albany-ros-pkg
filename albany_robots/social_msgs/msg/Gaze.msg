@@ -2,7 +2,7 @@
 geometry_msgs/PointStamped gaze_direction
 
 # how long to take in moving our gaze there
-time transition_time
+duration min_duration
 
 # how long to keep looking there
-time persistence 
+duration persistence 
