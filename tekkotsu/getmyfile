@@ -1,0 +1,23 @@
+#!/bin/bash
+# Albany-Chiara3: Addr 192.168.1.113
+# voltaire: Addr 192.168.1.25
+
+# to setup passphraseless entry (on chiara):
+# 	ssh-keygen -t dsa (enter no passwords)
+#       chmod 775 ~/.ssh
+#	scp ~/.ssh/id_dsa.pub suny@desktopIP:.ssh/authorized_keys
+
+USER=$1
+FILENAME=$2
+HOST="192.168.1.25"
+
+if [ -z "$FILENAME" ]; then
+  echo Usage: getmyfile user_folder filename
+  echo   i.e getmyfile myname ms/config/tekkotsu.xml
+  exit 1
+fi
+
+SRCFILE="mikef@$HOST:~/$USER/$FILENAME"
+
+echo scp $SRCFILE ~/project/$FILENAME
+scp $SRCFILE ~/project/$FILENAME

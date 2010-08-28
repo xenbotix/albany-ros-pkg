@@ -1,0 +1,104 @@
+Pocket Sphinx Voice Communication With Chiara and AIBO Robots
+Provided by: Daniel Spinner
+
+
+***IMPORTANT NOTES BEFORE YOU START***
+
+- Pocket Sphinx DOES NOT RUN ON THE AIBO.  You will need to use a remote computer to talk to it.
+- The microphone that is part of the webcam on the Chiara DOES NOT WORK WITH SPHINX.  You need to use a remote computer 
+  or plug a microphone into the line-in jack on the Chiara hardware.  Be advised that the microphone jack is buried inside of the Chiara
+  somewhere.  At the time of this tutorial, one Chiara does have a microphone extension cord for an external microphone.
+- You will need root priviledges to do all of the Sphinx installation.
+- When writing your behavior, keep in mind that all output strings from Sphinx will be in all caps.
+
+
+***DIRECTORY MANIFEST***
+Data directory:  Contains language model and dictionary files that go along with voicemachine.h
+continuous.c:  Modified source code for pocketsphinx_continuous program.  It has network connection functions for
+			transmission of text messages.
+main_livedecode.c:  Modified source code for sphinx3_livedecode program.  Also has network connection functions for
+				transmission of text messages.
+ps_con.sh:  Shell script for running pocketsphinx_continuous.
+voicemachine.h:  Behavior used to demonstrate voice recognition.
+
+
+***INSTALLATION***
+
+1.  Go to the Sphinx Subwiki main page (http://sphinx.subwiki.com/sphinx/index.php/Main_Page).
+
+2.  Run this command to make sure you have all of the required applications:
+	sudo apt-get install build-essential autoconf libtool automake libasound2-dev python-dev subversion sox libsox-fmt-all
+	
+    It is found in the Sphinx Subwiki but on another page that is not in one of the provided links.
+	
+3.  Follow instructions for installation of Sphinxbase and Pocketsphinx.
+
+4.  The location of the pocketsphinx_continuous program is /SPHINX_ROOT/pocketsphinx/src/programs
+    /SPHINX_ROOT/ is the path from the root directory to the directory pocketsphinx is in.
+
+5.  Rename continuous.c into something else (continuous_orig.c for example).  This is just in case you want the original
+    pocketspinx_continuous in the future (debugging voice output without communication for example).
+
+6.  Copy new version of continuous.c (the one with network communication functions) into /SPHINX_ROOT/pocketsphinx/src/programs
+    Before you actually compile, open the continuous.c file and change the IP address to the robot you will be using.  The line is:
+	#define ROBOT_IP "192.168.1.111"
+	
+    Change the IP address inside the quotes to the IP address of your robot.  It is on or near line 75.
+
+7.  Run the following command:
+	make pocketsphinx_contiunuous
+	
+    This MUST be done in the /SPHINX_ROOT/pocketsphinx/src/programs directory.  Otherwise it will not compile.
+    
+    If all goes well, you should only get one warning:
+	continuous.c: In function ‘utterance_loop’:
+	continuous.c:150: warning: unused variable ‘c’
+    
+    This is fine.  'c' is a variable used in a commented out while loop that reads in a reply from Tekkotsu regarding text messages.
+    That while loop is used for debugging purposes and is kept there just in case there is future need for it.  Bear in mind that 
+    the while loop is infinite and you will have to manually stop the program after the reply is received.
+
+
+*** CREATING A LANGUAGE MODEL AND USING SPHINX***
+
+8.  You will need to give pocketsphinx_continuous a language model and dictionary in order for it to work.  That may sound hard but
+    don't worry, CMU has a website that will create them for you.  All you need to do is create a text file with all of the words you
+    want to use, one on each line and then upload it to CMU's website (http://www.speech.cs.cmu.edu/tools/lmtool.html). 
+    After a few seconds, CMU will provide a link
+    to a tar.gz file containing everything you need.  The language model has a .lm extension and the dictionary has a .dic
+    extension.  Extract these files to wherever you want them to be and keep in mind where you put them.  It would be a good idea to
+    include the words "thats" and "all".  Why will be explained later.
+    
+9.  pocketsphinx_continuous usage:
+	./pocketsphinx_continuous -hmm /path/to/hmm/directory -lm /path/to/language/model/file.lm -dict /path/to/dictionary/file.dic
+
+    -hmm path is /SPHINX_ROOT/pocketsphinx/model/hmm/wsj1
+    -lm is the location of the .lm file in the tar.gz file from CMU website where you gave it the list of words you want to be able to use.
+    -dict is the location of the .dic file also in the tar.gz file from CMU.
+    
+    Yeah, that's a little long.  It's probably best to put the command into an executable shell script, a .sh file (sample provided).
+    
+    To make life easy, put the .lm and .dic files in the same directory as the script.  That way, all you have to put for the pathname
+    is ./lmfile.lm and ./dictfile.dic.  Also keep in mind that you may have to change the pathname of pocketsphinx_continuous if the
+    script is not in the same directory as the script.  If you do absolute addressing for everything, you can run the script from anywhere
+    in the filesystem.
+    
+10. Whenever you run pocketsphinx_continuous, you are going to get a whole bunch of gobbledy gook output.  This is normal.  It's part of
+    a dependency file.  It will pause for a moment after all of the output, it's connecting to the robot and initializing the decoding
+    algorithm.  If everything is successful, it will then say READY.  If there is an error, it will tell you what happened.  Once it says
+    READY, start taking into the microphone that is connected to either the robot or remote computer.
+    
+    pocketsphinx_continuous will say Listening... when it detects sound with sufficient volume.  When it is done listening, more
+    gobbledy good will be displayed.  At the very bottom, the last line, it will display what it thinks you said.  It will look something
+    like:
+	000000000: CHARLES (-28533482)
+	
+    The first number is an iteration.  It keeps track of the number of times it has decoded something.  The text after the ':' is what
+    it thinks you said.  What the number in the parentheses means is anyone's guess.
+
+    After that, if the transmission is successful, it will say Sending...  If not, an appropriate error message will be displayed.
+    Remember when it was suggested to include "thats" and "all" in the dictionary?  Here's why:  The string "THATS ALL" is the string that
+    will cause pocketsphinx_continuous to exit normally.  The phrase can be changed in the code, but pocketsphinx_continuous will run forever
+    unless you have a termination string or manually close it.  After the string is sent, it will start back over with READY...
+
+
