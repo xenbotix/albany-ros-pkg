@@ -2,27 +2,26 @@
 port: /dev/ttyUSB1
 baud: 1000000
 use_sync: False
-use_single_services: True
-rate: 30
+rate: 15
 dynamixels: {
-    "1": {name: r_shoulder_pitch},
-    "2": {name: r_shoulder},
-    "3": {name: r_elbow, invert: 1},
-    "4": {name: r_gripper, invert: 1},
-    "5": {name: l_shoulder_pitch, invert: 1},
-    "6": {name: l_shoulder, invert: 1},
-    "7": {name: l_elbow},
-    "8": {name: l_gripper},
-    "9": {name: head_pan, invert: 1, max_angle: 100, min_angle: -100}, 
-    "10": {name: head_tilt, neutral: 562, max_angle: 30, min_angle: -30},
-    "11": {name: head_tilt2, neutral: 542, max_angle: 20, min_angle: -18},
-    "12": {name: eye_tilt, max_angle: 100, min_angle: -100},
-    "13": {name: r_eye_pan, max_angle: 45, min_angle: -45},
-    "14": {name: l_eye_pan, max_angle: 45, min_angle: -45},
-    "15": {name: eyelids},
-    "16": {name: top_lip, invert: 1, max_angle: 30, min_angle: -40},
-    "17": {name: bottom_lip, max_angle: 30, min_angle: -40},
-    "18": {name: r_eyebrow, max_angle: 45, min_angle: -45},
-    "19": {name: l_eyebrow, invert: 1, max_angle: 45, min_angle: -45}
+    r_shoulder_pitch: {id: 1},
+    r_shoulder: {id: 2},
+    r_elbow: {id: 3, invert: 1},
+    r_gripper: {id: 4, invert: 1},
+    l_shoulder_pitch: {id: 5, invert: 1},
+    l_shoulder: {id: 6, invert: 1},
+    l_elbow: {id: 7},
+    l_gripper: {id: 8},
+    head_pan: {id: 9, max_angle: 100, min_angle: -100}, 
+    head_tilt: {id: 10, invert: 1, neutral: 562, max_angle: 30, min_angle: -30},
+    head_tilt2: {id: 11, neutral: 542, max_angle: 20, min_angle: -18},
+    eye_tilt: {id: 12, max_angle: 100, min_angle: -100, sync: False},
+    r_eye_pan: {id: 13, max_angle: 45, min_angle: -45, sync: False},
+    l_eye_pan: {id: 14, max_angle: 45, min_angle: -45, sync: False},
+    eyelids: {id: 15, sync: False},
+    top_lip: {id: 16, invert: 1, max_angle: 30, min_angle: -40, sync: False},
+    bottom_lip: {id: 17, max_angle: 30, min_angle: -40, sync: False},
+    r_eyebrow: {id: 18, max_angle: 45, min_angle: -45, sync: False},
+    l_eyebrow: {id: 19, invert: 1, max_angle: 45, min_angle: -45, sync: False}
 }
 
