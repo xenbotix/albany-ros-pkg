@@ -2,10 +2,10 @@
 port: /dev/ttyUSB1
 rate: 15
 sensors: {
-    "lidar": {type: lidar}
+    pml: {type: "pml", id: 1}
 }
 dynamixels: {
-    "1": {name: head_pan},
-    "2": {name: head_tilt, max_angle: 100, min_angle: -100}
+    head_pan: {id: 1},
+    head_tilt: {id: 2, max_angle: 100, min_angle: -100}
 }
 
