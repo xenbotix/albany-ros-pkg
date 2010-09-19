@@ -121,7 +121,7 @@ class faceControllerGUI(wx.Frame):
     def onTimer(self, event=None):
         # send updates
         j = JointState()
-        j.name = ["head_pan", "head_tilt", "eye_tilt", "r_eye_pan", "l_eye_pan", 
+        j.name = ["head_pan_joint", "head_tilt_joint", "eye_tilt", "r_eye_pan", "l_eye_pan", 
                        "eyelids", "top_lip", "bottom_lip", "r_eyebrow", "l_eyebrow"]
         j.position = [self.pan/100.0, self.tilt/100.0, self.eye_tilt.GetValue()/100.0, self.r_eye_pan.GetValue()/100.0, self.l_eye_pan.GetValue()/100.0,
                         0, self.top_lip.GetValue()/100.0, self.bot_lip.GetValue()/100.0, self.r_eyebrow.GetValue()/100.0, self.l_eyebrow.GetValue()/100.0]
