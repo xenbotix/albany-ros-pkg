@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """ Lead Nelson around by the hand
-    Michael E. Ferguson, July 18, 2010. """
+    Copyright 2010 Michael E. Ferguson """
 
 import roslib; roslib.load_manifest('nelson_apps')
 import rospy
@@ -9,7 +9,6 @@ import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
 from arbotix.srv import *
-#from irobot_create_2_1.srv import *
 
 class walkWithMe():
     def __init__(self, name='WalkWithMe'):
@@ -24,15 +23,9 @@ class walkWithMe():
         
         # publish to cmd_vel
         self.p = rospy.Publisher('cmd_vel', Twist)
-
-        # services to run the create
-        #rospy.wait_for_service('brake')
-        #self.brake = rospy.ServiceProxy('brake', Brake)
-        #rospy.wait_for_service('tank')
-        #self.tank = rospy.ServiceProxy('tank', Tank)
        
         # need to relax the arm to pull him around by
-        for servo in ["l_shoulder_pitch","r_shoulder_pitch","l_shoulder","r_shoulder","l_elbow","r_elbow","l_gripper","r_gripper"]:
+        for servo in ["l_shoulder_pitch_joint","r_shoulder_pitch_joint","l_shoulder_joint","r_shoulder_joint","l_elbow_joint","r_elbow_joint","l_gripper_joint","r_gripper_joint"]:
             x = rospy.ServiceProxy(servo+"_relax",Relax)
             x()
 
@@ -47,12 +40,12 @@ class walkWithMe():
             r.sleep()
             
     def callback(self, msg):
-        armElev = float(msg.position[msg.name.index('l_shoulder_pitch')])
-        armAngle = float(msg.position[msg.name.index('l_elbow')]) - float(msg.position[msg.name.index('l_shoulder')])
+        armElev = float(msg.position[msg.name.index('l_shoulder_pitch_joint')])
+        armAngle = float(msg.position[msg.name.index('l_elbow_joint')]) - float(msg.position[msg.name.index('l_shoulder_joint')])
         if armElev > 0:
             # move forward
             self.x_speed = armElev
-            self.r_speed = -armAngle #* 2;
+            self.r_speed = -armAngle;
         else:
             self.x_speed = 0.0
             self.r_speed = 0.0
