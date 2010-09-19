@@ -50,13 +50,13 @@
      <origin xyz="0 0 1.27" />
   </joint>
 
-  <joint name="laser" type="fixed">
+  <joint name="laser_joint" type="fixed">
      <parent link="base_link" />
      <child link="base_laser" />
      <origin xyz="0 0 0.165" />
   </joint>
 
-  <joint name="head_pan" type="revolute">
+  <joint name="head_pan_joint" type="revolute">
      <parent link="column_link" />
      <child link="pan_link" />
      <origin xyz="0.0762 0 0"/>
@@ -64,7 +64,7 @@
      <limit effort="30" velocity="1.0" lower="-1.57" upper="1.57" />
   </joint>
  
-  <joint name="head_tilt" type="revolute">
+  <joint name="head_tilt_joint" type="revolute">
      <parent link="pan_link" />
      <child link="tilt_link" />
      <origin xyz=".0381 0 .0381 " />

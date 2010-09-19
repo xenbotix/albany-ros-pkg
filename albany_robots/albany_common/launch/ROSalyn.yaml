@@ -1,11 +1,11 @@
 ---
-port: /dev/ttyUSB1
+port: /dev/ttyUSB0
 rate: 15
 sensors: {
-    pml: {type: "pml", id: 1}
+    pml: {type: "pml", id: 3}
 }
 dynamixels: {
-    head_pan: {id: 1},
-    head_tilt: {id: 2, max_angle: 100, min_angle: -100}
+    head_pan_joint: {id: 1},
+    head_tilt_joint: {id: 2, max_angle: 100, min_angle: -100}
 }
 
