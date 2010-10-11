@@ -1,11 +1,11 @@
 <launch>
-  <param name="robot_description" command="cat $(find albany_common)/launch/ROSalyn.urdf" />
+  <param name="robot_description" command="cat $(find rosalyn)/conf/ROSalyn.urdf" />
 
   <!-- bring up a camera, create, arbotix --> 
   <include file="$(find albany_common)/launch/qc9000.launch" />  
   <node name="rosalyn_base" pkg="irobot_create_2_1" type="driver.py" />
   <node name="arbotix" pkg="arbotix" type="arbotix-node.py" output="screen">
-    <rosparam file="$(find albany_common)/launch/ROSalyn.yaml" command="load" />
+    <rosparam file="$(find rosalyn)/conf/ROSalyn.yaml" command="load" />
   </node>
 
   <node pkg="robot_state_publisher" type="state_publisher" name="rob_st_pub" />
