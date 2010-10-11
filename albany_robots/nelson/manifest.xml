@@ -1,0 +1,17 @@
+<package>
+  <description brief="nelson">
+
+     nelson
+
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/nelson</url>
+  <depend package="rospy"/>
+  <depend package="irobot_create_2_1"/>
+  <depend package="arbotix"/>
+
+</package>
+
+
