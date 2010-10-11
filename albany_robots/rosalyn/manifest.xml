@@ -1,0 +1,18 @@
+<package>
+  <description brief="rosalyn">
+
+     rosalyn
+
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rosalyn</url>
+  <depend package="rospy"/>
+  <depend package="usb_cam"/>
+  <depend package="irobot_create_2_1"/>
+  <depend package="arbotix"/>
+
+</package>
+
+
