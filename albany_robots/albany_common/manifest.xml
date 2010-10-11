@@ -1,6 +1,6 @@
 <package>
   <description brief="albany_common">
-    Description and launch files for robots and hardware at ILS.
+    Description and launch files for common hardware at ILS.
   </description>
   <author>Michael E. Ferguson</author>
   <license>BSD</license>
@@ -9,7 +9,8 @@
 
   <depend package="rospy"/>
   <depend package="usb_cam"/>
-  <depend package="irobot_create_2_1"/>
+  <depend package="sensor_msgs"/>
+  <depend package="geometry_msgs"/>
 
 </package>
 
