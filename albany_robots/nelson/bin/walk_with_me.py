@@ -3,7 +3,7 @@
 """ Lead Nelson around by the hand
     Copyright 2010 Michael E. Ferguson """
 
-import roslib; roslib.load_manifest('nelson_apps')
+import roslib; roslib.load_manifest('nelson')
 import rospy
 
 from geometry_msgs.msg import Twist

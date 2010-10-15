@@ -3,7 +3,7 @@
 """ Put Nelson's head in the up position
     Michael E. Ferguson, 2010. """
 
-import roslib; roslib.load_manifest('nelson_common')
+import roslib; roslib.load_manifest('nelson')
 import rospy
 
 import time

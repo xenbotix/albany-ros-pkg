@@ -4,7 +4,7 @@
     Voodoo control of right arm, using left arm.
     Copyright 2010 Michael E. Ferguson """
 
-import roslib; roslib.load_manifest('nelson_apps')
+import roslib; roslib.load_manifest('nelson')
 import rospy
 
 from sensor_msgs.msg import JointState
