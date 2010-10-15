@@ -1,0 +1,17 @@
+<package>
+  <description brief="expression">
+    Expression engine for Nelson-like robots. GUIs for control and display of expression engines. 
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/expression</url>
+
+  <depend package="rospy"/>
+  <depend package="sensor_msgs"/>
+  <depend package="std_srvs"/>
+
+</package>
+
+
