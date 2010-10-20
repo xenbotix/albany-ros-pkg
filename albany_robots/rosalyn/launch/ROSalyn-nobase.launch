@@ -4,11 +4,12 @@
 
   <!-- bring up a camera, create, arbotix --> 
   <include file="$(find albany_common)/launch/qc9000.launch" />
-  <node name="rosalyn_base" pkg="irobot_create_2_1" type="driver.py" />
   <node name="arbotix" pkg="arbotix" type="arbotix-node.py" output="screen">
     <rosparam file="$(find rosalyn)/conf/ROSalyn.yaml" command="load" />
+    <param name="port" value="/dev/ttyUSB0" />
   </node>
 
   <node pkg="robot_state_publisher" type="state_publisher" name="rob_st_pub" />
+
 </launch>
 
