@@ -10,7 +10,7 @@ import rospy
 from sensor_msgs.msg import JointState
 from arbotix.srv import *
 
-mapping = { "l_shoulder_pitch_joint":"r_shoulder_pitch_joint", "l_shoulder_joint":"r_shoulder_joint", "l_elbow_joint":"r_elbow_joint", "l_gripper_joint":"r_gripper_joint" }
+mapping = { "l_shoulder_lift_joint":"r_shoulder_lift_joint", "l_shoulder_pan_joint":"r_shoulder_pan_joint", "l_elbow_flex_joint":"r_elbow_flex_joint", "l_gripper_joint":"r_gripper_joint" }
 outputs = dict()
 relax = dict()
 values = dict()

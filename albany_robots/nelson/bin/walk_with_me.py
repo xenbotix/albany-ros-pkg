@@ -25,7 +25,7 @@ class walkWithMe():
         self.p = rospy.Publisher('cmd_vel', Twist)
        
         # need to relax the arm to pull him around by
-        for servo in ["l_shoulder_pitch_joint","r_shoulder_pitch_joint","l_shoulder_joint","r_shoulder_joint","l_elbow_joint","r_elbow_joint","l_gripper_joint","r_gripper_joint"]:
+        for servo in ["l_shoulder_lift_joint","r_shoulder_lift_joint","l_shoulder_pan_joint","r_shoulder_pan_joint","l_elbow_flex_joint","r_elbow_flex_joint","l_gripper_joint","r_gripper_joint"]:
             x = rospy.ServiceProxy(servo+"_relax",Relax)
             x()
 
@@ -40,8 +40,8 @@ class walkWithMe():
             r.sleep()
             
     def callback(self, msg):
-        armElev = float(msg.position[msg.name.index('l_shoulder_pitch_joint')])
-        armAngle = float(msg.position[msg.name.index('l_elbow_joint')]) - float(msg.position[msg.name.index('l_shoulder_joint')])
+        armElev = float(msg.position[msg.name.index('l_shoulder_lift_joint')])
+        armAngle = float(msg.position[msg.name.index('l_elbow_flex_joint')]) - float(msg.position[msg.name.index('l_shoulder_pan_joint')])
         if armElev > 0:
             # move forward
             self.x_speed = armElev

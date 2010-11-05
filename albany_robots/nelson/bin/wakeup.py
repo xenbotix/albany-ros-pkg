@@ -11,15 +11,17 @@ import time
 from sensor_msgs.msg import JointState
 from arbotix.srv import *
 
-neck = {"head_pan":0.0, "head_tilt": 0.0, "head_tilt2":0.2 }
+neck = {"head_pan_joint":0.0, "head_tilt_joint": 0.0, "head_tilt2_joint":0.2 }
 
 rospy.init_node('wakeup')
-time.sleep(3.0)
+cmd_joints = rospy.Publisher('cmd_joints', JointState)
 
-while
-
-for servo, value in neck.items():
-    rospy.wait_for_service(servo+'_setangle')
-    s = rospy.ServiceProxy(servo+'_setangle',SetAngle)
-    s(value)
+r = rospy.Rate(1)
+for i in range(10):
+    j = JointState()
+    for servo in neck.keys():
+        j.name.append(servo)
+        j.position.append(neck[servo])
+    cmd_joints.publish(j)
+    r.sleep()
 
