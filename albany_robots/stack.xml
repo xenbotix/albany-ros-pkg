@@ -1,0 +1,15 @@
+<stack>
+  <description brief="albany_robots">
+    Hardware drivers, controllers, and GUIs used in the ILS Social Robotics Lab
+  </description>
+  <author>Maintained by Michael E. Ferguson</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/albany_robots</url>
+
+  <depend stack="ros" /> <!-- std_msgs, roscpp, rospy -->
+  <depend stack="bosch-drivers" /> <!-- usb_cam -->
+  <depend stack="common_msgs" /> <!-- sensor_msgs -->
+  <depend stack="geometry" /> <!-- tf -->
+  
+</stack>

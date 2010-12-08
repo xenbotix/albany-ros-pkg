@@ -1,0 +1,8 @@
+<launch>
+  <!-- <param name="robot_description" command="cat $(find nelson)/conf/nelson.urdf" /> -->
+  <node name="create" pkg="irobot_create_2_1" type="driver.py" />
+  <node name="arbotix" pkg="arbotix" type="arbotix-node.py" output="screen">
+      <rosparam file="$(find nelson)/conf/nelson.yaml" command="load" />
+  </node>
+  <node name="wakeup" pkg="nelson" type="wakeup.py" />
+</launch>

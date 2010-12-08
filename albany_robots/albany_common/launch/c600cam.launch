@@ -1,0 +1,19 @@
+<launch>
+
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+  <!-- video0 is usually built in -->
+    <param name="video_device" value="/dev/video1" />
+    <param name="image_width" value="640" />
+    <param name="image_height" value="480" />
+    <param name="pixel_format" value="yuyv" />
+    <param name="camera_frame_id" value="usb_cam" />
+    <param name="io_method" value="mmap"/>
+  <!-- usb_cam doesn't save the camera_info, but we can load and publish it, the following is for Logitech c600 -->
+    <rosparam param="D">[0.059771, -0.132615, 0.002283, 0.001634, 0.0]</rosparam>
+    <rosparam param="K">[482.234792, 0.000000, 306.437246, 0.0, 478.094455, 215.766880, 0.0, 0.0, 1.0]</rosparam>
+    <rosparam param="R">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
+    <rosparam param="P">[482.234792, 0.0, 306.437246, 0.0, 0.0, 478.094455, 215.766880, 0.0, 0.0, 0.0, 1.0, 0.0]</rosparam> 
+  </node>
+
+</launch>
+

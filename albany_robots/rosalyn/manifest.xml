@@ -1,0 +1,15 @@
+<package>
+  <description brief="rosalyn">
+    Configuration and launch files for ROSalyn.
+  </description>
+  <author>Michael E. Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rosalyn</url>
+
+  <depend package="rospy"/>
+  <depend package="irobot_create_2_1"/>
+  <depend package="arbotix"/>
+</package>
+
+

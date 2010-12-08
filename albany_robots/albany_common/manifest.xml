@@ -1,0 +1,17 @@
+<package>
+  <description brief="albany_common">
+    Description and launch files for common hardware at ILS.
+  </description>
+  <author>Michael E. Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/albany_common</url>
+
+  <depend package="rospy"/>
+  <depend package="usb_cam"/>
+  <depend package="sensor_msgs"/>
+  <depend package="geometry_msgs"/>
+
+</package>
+
+

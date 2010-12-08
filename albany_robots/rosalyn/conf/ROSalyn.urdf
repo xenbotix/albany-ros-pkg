@@ -1,0 +1,81 @@
+<robot name="ROSalyn">
+
+  <!-- Robot Definitions for ROSalyn (Create + P&T camera boom + gp_lidar) -->
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 .0381" rpy="0 0 0" />
+      <geometry><cylinder radius="0.1778" length="0.0762" /></geometry>
+      <material name="white"><color rgba="1 1 1 1"/></material>
+    </visual>
+  </link>
+
+  <link name="base_laser">
+    <visual>
+      <origin xyz="0 0 .0381" rpy="0 0 0" />
+      <geometry><box size=".04 .04 .06" /></geometry>
+      <material name="black"><color rgba="0 0 0 1"/></material>
+    </visual>
+  </link>
+     
+  <link name="column_link">
+    <visual>
+      <origin xyz="0 0 -.635" rpy="0 0 0" />
+      <geometry><cylinder radius="0.0285" length="1.27" /></geometry>
+      <material name="gray"><color rgba=".5 .5 .5 1"/></material>
+    </visual>
+  </link>
+
+  <link name="pan_link">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry><box size=".0635 .0381 .0381"/></geometry>
+      <material name="black"><color rgba="0 0 0 1"/></material>
+    </visual>
+  </link>
+
+  <link name="tilt_link">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry><box size=".0635 .0381 .0381"/></geometry>
+      <material name="black"><color rgba="0 0 0 1"/></material>
+    </visual>
+  </link>
+
+  <link name="usb_cam" />
+
+  <joint name="column" type="fixed">
+     <parent link="base_link" />
+     <child link="column_link" />
+     <origin xyz="0 0 1.27" />
+  </joint>
+
+  <joint name="laser_joint" type="fixed">
+     <parent link="base_link" />
+     <child link="base_laser" />
+     <origin xyz="0 0 0.165" />
+  </joint>
+
+  <joint name="head_pan_joint" type="revolute">
+     <parent link="column_link" />
+     <child link="pan_link" />
+     <origin xyz="0.0762 0 0"/>
+     <axis xyz="0 0 1.0"/>
+     <limit effort="30" velocity="1.0" lower="-1.57" upper="1.57" />
+  </joint>
+ 
+  <joint name="head_tilt_joint" type="revolute">
+     <parent link="pan_link" />
+     <child link="tilt_link" />
+     <origin xyz=".0381 0 .0381 " />
+     <axis xyz="0 1.0 0"/>
+     <limit effort="30" velocity="1.0" lower="-1.57" upper="1.57" />
+  </joint>
+  
+  <joint name="camera" type="fixed">
+     <parent link="tilt_link" />
+     <child link="usb_cam" />
+     <origin xyz="0 0 0" rpy="-1.57 0 -1.57"/>
+  </joint>
+
+</robot>
