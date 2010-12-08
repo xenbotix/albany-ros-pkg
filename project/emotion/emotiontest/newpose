@@ -1,0 +1,9 @@
+#Curious-76.17% Informed-13.06% Helpful-10.77% 
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 2 664
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 4 275
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 14 617
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 15 617
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 17 499
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 18 413
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 19 625
+/usr/local/Tekkotsu/tools/dynamixel_util/dynamixel_util move 20 395

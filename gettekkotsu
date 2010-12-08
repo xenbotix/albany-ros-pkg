@@ -1,0 +1,31 @@
+#!/bin/bash
+# Albany-Chiara3: Addr 192.168.1.113
+# voltaire: Addr 192.168.1.25
+
+# to setup passphraseless entry (on chiara):
+# 	ssh-keygen -t dsa (enter no passwords)
+#       chmod 775 ~/.ssh
+#	scp ~/.ssh/id_dsa.pub suny@desktopIP:.ssh/authorized_keys
+
+USER=$1
+HOST="192.168.1.25"
+
+if [ -z "$USER" ]; then
+  echo Usage: gettekkotsu user_folder
+  exit 1
+fi
+
+if [ ! -d ~/lib ]; then
+  mkdir ~/lib
+fi
+
+echo scp mikef@$HOST:/usr/local/Tekkotsu/build/PLATFORM_LOCAL/TGT_CHIARA/libtekkotsu.so ~/lib
+scp mikef@$HOST:/usr/local/Tekkotsu/build/PLATFORM_LOCAL/TGT_CHIARA/libtekkotsu.so ~/lib
+
+echo scp mikef@$HOST:/usr/local/Tekkotsu/build/PLATFORM_LOCAL/Shared/newmat/libnewmat.so ~/lib
+scp mikef@$HOST:/usr/local/Tekkotsu/build/PLATFORM_LOCAL/Shared/newmat/libnewmat.so ~/lib
+
+rm -f ~/project/tekkotsu-CHIARA
+
+echo Tekkotsu libraries updated.   Do "getmycode" to retrieve your executable.
+

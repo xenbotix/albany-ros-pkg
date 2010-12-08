@@ -1,0 +1,77 @@
+Language model created by QuickLM on Wed Apr 29 15:27:48 EDT 2009
+Copyright (c) 1996-2000
+Carnegie Mellon University and Alexander I. Rudnicky
+
+This model based on a corpus of 14 sentences and 16 words
+The (fixed) discount mass is 0.5
+
+\data\
+ngram 1=16
+ngram 2=28
+ngram 3=14
+
+\1-grams:
+-0.7782 </s> -0.3010
+-0.7782 <s> -0.2218
+-1.9243 ALL -0.2218
+-1.9243 CHARLES -0.2218
+-1.9243 DANCE -0.2218
+-1.9243 FETCH -0.2218
+-1.9243 JAMES -0.2218
+-1.9243 JOKE -0.2218
+-1.9243 NOW -0.2218
+-1.9243 PLEASE -0.2218
+-1.9243 RICK -0.2218
+-1.9243 ROLLOVER -0.2218
+-1.9243 THANK -0.2218
+-1.9243 THATS -0.2218
+-1.9243 WHAT -0.2218
+-1.9243 YOU -0.2218
+
+\2-grams:
+-1.4472 <s> ALL 0.0000
+-1.4472 <s> CHARLES 0.0000
+-1.4472 <s> DANCE 0.0000
+-1.4472 <s> FETCH 0.0000
+-1.4472 <s> JAMES 0.0000
+-1.4472 <s> JOKE 0.0000
+-1.4472 <s> NOW 0.0000
+-1.4472 <s> PLEASE 0.0000
+-1.4472 <s> RICK 0.0000
+-1.4472 <s> ROLLOVER 0.0000
+-1.4472 <s> THANK 0.0000
+-1.4472 <s> THATS 0.0000
+-1.4472 <s> WHAT 0.0000
+-1.4472 <s> YOU 0.0000
+-0.3010 ALL </s> -0.3010
+-0.3010 CHARLES </s> -0.3010
+-0.3010 DANCE </s> -0.3010
+-0.3010 FETCH </s> -0.3010
+-0.3010 JAMES </s> -0.3010
+-0.3010 JOKE </s> -0.3010
+-0.3010 NOW </s> -0.3010
+-0.3010 PLEASE </s> -0.3010
+-0.3010 RICK </s> -0.3010
+-0.3010 ROLLOVER </s> -0.3010
+-0.3010 THANK </s> -0.3010
+-0.3010 THATS </s> -0.3010
+-0.3010 WHAT </s> -0.3010
+-0.3010 YOU </s> -0.3010
+
+\3-grams:
+-0.3010 <s> ALL </s>
+-0.3010 <s> CHARLES </s>
+-0.3010 <s> DANCE </s>
+-0.3010 <s> FETCH </s>
+-0.3010 <s> JAMES </s>
+-0.3010 <s> JOKE </s>
+-0.3010 <s> NOW </s>
+-0.3010 <s> PLEASE </s>
+-0.3010 <s> RICK </s>
+-0.3010 <s> ROLLOVER </s>
+-0.3010 <s> THANK </s>
+-0.3010 <s> THATS </s>
+-0.3010 <s> WHAT </s>
+-0.3010 <s> YOU </s>
+
+\end\

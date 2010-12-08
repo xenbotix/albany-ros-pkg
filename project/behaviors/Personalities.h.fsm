@@ -1,0 +1,124 @@
+//-*-c++-*-
+#ifndef INCLUDED_Personalities_h_
+#define INCLUDED_Personalities_h_
+ 
+#include "Behaviors/StateMachine.h"
+#include "Motion/WalkMC.h"
+#include "Motion/MotionPtr.h"
+#include "Events/EventRouter.h"
+#include "stdlib.h"
+
+/* 
+    when we transition, we pick a random angle/speed to move at
+
+    sout->printf("EVENT: %s\n",logdata.c_str()); to send commands to our GUI
+
+*/
+
+class Personalities : public StateNode {
+  public:
+    enum proceedInstruction {
+        turnLeft,
+        turnRight,
+        straightAhead
+    };
+
+    /* This is the random/agressive personality, it is a mini-FSM */
+    class RandomPersonality : public StateNode {
+      public:
+
+        class DecideNode : public StateNode {
+          public:
+            DecideNode() : StateNode("DecideNode") {
+                srand(4242);
+            }
+
+            virtual void DoStart() {
+                int x = rand() % 100;
+                if(0)   // if bumper pressed
+                    postStateSignal<proceedInstruction>(straightAhead);                
+                else if(x < 25)
+                    postStateSignal<proceedInstruction>(turnLeft);
+                else if(x < 75)
+                    postStateSignal<proceedInstruction>(straightAhead);
+                else{
+                    postStateSignal<proceedInstruction>(turnRight);
+                }
+            }
+        };
+
+        RandomPersonality(MotionManager::MC_ID id) : StateNode("RandomPersonality"), walkID(id) {}
+  
+        virtual void setup() {
+          #statemachine
+            startnode: DecideNode()
+
+            startnode =S<proceedInstruction>(turnLeft)=> left: WalkNode($,0,0,M_PI/2,1)[setMC(walkID)] =C=> startnode
+
+            startnode =S<proceedInstruction>(turnRight)=> right: WalkNode($,0,0,-M_PI/2,1)[setMC(walkID)] =C=> startnode
+
+            startnode =S<proceedInstruction>(straightAhead)=> straight: WalkNode($,300,0,0,1)[setMC(walkID)] =C=> startnode
+
+            straight =B(RobotInfo::BumpLeftButOffset)=> SpeechNode("Get Out of my Way!") =T(500)=> right
+            
+            straight =B(RobotInfo::BumpRightButOffset)=> SpeechNode("Stupid Humans!") =T(500)=> left
+          #endstatemachine
+        }
+
+      private:
+        MotionManager::MC_ID walkID;
+    };
+    
+    /* This is the nice/predictable personality, it is a mini-FSM */
+    class NicePersonality : public StateNode {
+      public:
+        NicePersonality(MotionManager::MC_ID id) : StateNode("NicePersonality"), walkID(id) {}
+
+        virtual void setup() {
+          #statemachine
+            startnode: StateNode =N=>
+
+            straight: WalkNode($,50,0,0.05)[setMC(walkID)]
+            
+            left: WalkNode($,0,0,M_PI/4,2)[setMC(walkID)] =C=> straight
+            
+            right: WalkNode($,0,0,-M_PI/4,2)[setMC(walkID)] =C=> straight
+
+            straight =B(RobotInfo::BumpLeftButOffset)=> SpeechNode("sorry") =T(500)=> right
+            
+            straight =B(RobotInfo::BumpRightButOffset)=> SpeechNode("I apologize") =T(500)=> left
+          #endstatemachine           
+
+        }
+
+      private:
+        MotionManager::MC_ID walkID;
+    };
+
+    /* Controlled by Text Messages. 
+     *   '!msg Random\n' will put us into the random/angry personality.
+     *   '!msg Nice\n'   puts us into the nice/slow personality. 
+     */
+    Personalities() : StateNode("Personalities") {}
+    virtual void setup() {
+        MotionManager::MC_ID walkID = addMotion(MotionPtr<WalkMC>());
+      #statemachine
+        startnode: StateNode
+
+        {startnode, nice} =TM("Random")=> SpeechNode("I don't want to follow your rules") =T(500)=> mean
+
+        {startnode, mean} =TM("Nice")=> SpeechNode("How can I be of assistance?") =T(500)=> nice
+
+        mean: RandomPersonality(walkID)
+
+        nice: NicePersonality(walkID)          
+
+      #endstatemachine
+    }       // end of setup()
+
+};
+
+DATAEVENT_IMPLEMENTATION(Personalities::proceedInstruction, unsigned int);
+
+#endif
+
