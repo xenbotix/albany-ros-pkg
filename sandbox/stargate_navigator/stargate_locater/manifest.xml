@@ -1,0 +1,16 @@
+<package>
+  <description brief="stargate_locater">
+    Localization routines for the ILS Stargate Navigator. 
+  </description>
+  <author>Michael E. Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/stargate_locater</url>
+
+  <depend package="rospy"/>
+  <depend package="ar_pose"/>
+  <depend package="tf"/>
+
+</package>
+
+

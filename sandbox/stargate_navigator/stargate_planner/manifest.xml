@@ -1,0 +1,23 @@
+<package>
+  <description brief="stargate_planner">
+    A planner for the ILS Stargate Navigator. Based on carrot_planner. 
+  </description>
+  <author>Michael E. Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/stargate_planner</url>
+  <depend package="roscpp"/>
+  <depend package="costmap_2d"/>
+  <depend package="pluginlib"/>
+  <depend package="nav_core"/>
+  <depend package="tf" />
+  <depend package="angles" />
+  <depend package="stargate_map_server"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp -I{prefix}/srv/cpp" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lstargate_planner"/>
+    <nav_core plugin="${prefix}/bgp_plugin.xml" />
+  </export>
+</package>
+
+
