@@ -1,8 +1,8 @@
 <stack>
-  <description brief="albany_robots">
-    Hardware drivers, controllers, and GUIs used in the ILS Social Robotics Lab
+  <description brief="Hardware drivers, controllers, and GUIs used in the ILS Social Robotics Lab">
+    This stack contains a configuration and control code for a number of robots developed in the ILS Social Robotics Lab, at the University of Albany, State University of New York. 
   </description>
-  <author>Maintained by Michael E. Ferguson</author>
+  <author>Maintained by Michael Ferguson</author>
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/albany_robots</url>

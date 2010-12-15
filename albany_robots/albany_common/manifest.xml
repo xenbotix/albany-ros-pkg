@@ -1,6 +1,6 @@
 <package>
-  <description brief="albany_common">
-    Description and launch files for common hardware at ILS.
+  <description brief="Common files for the ILS Social Robotics Lab">
+    Description and launch files for common hardware in the ILS Social Robotics Lab.
   </description>
   <author>Michael E. Ferguson</author>
   <license>BSD</license>
