@@ -1,0 +1,18 @@
+<package>
+  <description brief="fall10_workshop">
+
+     fall10_workshop
+
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/fall10_workshop</url>
+  <depend package="irobot_create_2_1"/>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+
