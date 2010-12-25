@@ -1,7 +1,7 @@
 <package>
   <description brief="coreslam">
 
-This package contains GMapping, from OpenSlam, and a ROS wrapper.
+This package contains CoreSLAM, from OpenSlam, and a ROS wrapper.
 
   </description>
   <author>Bruno Steuxa and Oussama El Hamzaoui; ROS Wrapper by Michael Ferguson</author>

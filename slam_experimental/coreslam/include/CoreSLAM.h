@@ -1,5 +1,5 @@
-#ifndef _CORESLAM_H_
-#define _CORESLAM_H_
+#ifndef _TINYSLAM_H_
+#define _TINYSLAM_H_
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -30,8 +30,8 @@ typedef struct {
 
 typedef struct {
     unsigned int timestamp;
-    int q1, q2;                // Odometry information
-    double v, psidot;          // Used to correct the scans according to the speed of the robot
+//    int q1, q2;                // Odometry information
+//    double v, psidot;          // Used to correct the scans according to the speed of the robot
     ts_position_t position[3]; // 0 : forward - 1 : backward - 2 : final / closed loop
     int d[TS_SCAN_SIZE];
 } ts_sensor_data_t;
@@ -66,12 +66,12 @@ void ts_save_map_pgm(ts_map_t *map, ts_map_t *overlay, char *filename, int width
 void ts_draw_scan(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos);
 void ts_draw_scan_RGB(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos, unsigned char *pixmap, int scale, int reversey);
 
-typedef struct {
+/*typedef struct {
     double r;	    // length wheels' radius
     double R;	    // half the wheels' axis length
     int inc;	    // wheels' counters increments per turn
     double ratio;   // ratio between left and right wheel
-} ts_robot_parameters_t;
+} ts_robot_parameters_t;*/
 
 typedef struct {
     double offset;  // position of the laser wrt center of rotation
@@ -85,12 +85,12 @@ typedef struct {
 typedef struct {
     ts_randomizer_t randomizer;
     ts_map_t *map;
-    ts_robot_parameters_t params;
+    //ts_robot_parameters_t params;
     ts_laser_parameters_t laser_params;
     ts_position_t position;
-    int q1, q2;
+    //int q1, q2;
     unsigned int timestamp;
-    double psidot, v;
+    //double psidot, v;
     double distance;
     int hole_width;
     int direction;
@@ -104,7 +104,7 @@ typedef struct {
 #define TS_DIRECTION_BACKWARD  1
 #define TS_FINAL_MAP 2
 
-void ts_state_init(ts_state_t *state, ts_map_t *map, ts_robot_parameters_t *params, ts_laser_parameters_t *laser_params, ts_position_t *position, double sigma_xy, double sigma_theta, int hole_width, int direction);
+void ts_state_init(ts_state_t *state, ts_map_t *map, /*ts_robot_parameters_t *params,*/ ts_laser_parameters_t *laser_params, ts_position_t *position, double sigma_xy, double sigma_theta, int hole_width, int direction);
 void ts_build_scan(ts_sensor_data_t *sd, ts_scan_t *scan, ts_state_t *state, int span);
 void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state);
 
@@ -114,4 +114,4 @@ void ts_close_loop_trajectory(ts_sensor_data_t *sensor_data, int maxscans,
         ts_position_t *startpos, ts_position_t *close_loop_position);
 
 
-#endif // _CORESLAM_H_
+#endif // _TINYSLAM_H_
