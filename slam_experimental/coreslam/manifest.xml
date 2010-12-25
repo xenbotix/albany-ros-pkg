@@ -1,0 +1,22 @@
+<package>
+  <description brief="coreslam">
+
+This package contains GMapping, from OpenSlam, and a ROS wrapper.
+
+  </description>
+  <author>Bruno Steuxa and Oussama El Hamzaoui; ROS Wrapper by Michael Ferguson</author>
+  <license>MIT</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/coreslam</url>
+
+  <depend package="roscpp"/>
+  <depend package="rosconsole"/>
+  <depend package="std_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="std_msgs"/>
+  <depend package="tf"/>
+  <depend package="message_filters"/>
+
+</package>
+
+
