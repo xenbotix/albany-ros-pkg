@@ -7,9 +7,11 @@
 
 #define TS_SCAN_SIZE 8192
 #define TS_MAP_SIZE 2048
-#define TS_MAP_SCALE 0.1
+//#define TS_MAP_SCALE 0.02
 #define TS_NO_OBSTACLE 65500
 #define TS_OBSTACLE 0
+
+extern double TS_MAP_SCALE;
 
 typedef unsigned short ts_map_pixel_t;
 
@@ -37,6 +39,7 @@ typedef struct {
 } ts_sensor_data_t;
 
 void ts_map_init(ts_map_t *map);
+void ts_map_set_scale(double scale);
 int ts_distance_scan_to_map(ts_scan_t *scan, ts_map_t *map, ts_position_t *pos);
 void ts_map_update(ts_scan_t *scan, ts_map_t *map, ts_position_t *position, int quality, int hole_width);
 
