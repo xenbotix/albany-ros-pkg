@@ -1,0 +1,8 @@
+<stack>
+  <description brief="slam_coreslam">Map Building with CoreSLAM</description>
+  <author>Maintained by Michael Ferguson</author>
+  <license>MIT</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/slam_coreslam</url>
+  <depend stack="ros" />
+</stack>
