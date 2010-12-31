@@ -4,11 +4,5 @@
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/slam_experimental</url>
-
-  <depend stack="common_msgs" /> <!-- nav_msgs, geometry_msgs, sensor_msgs -->
-  <depend stack="geometry" /> <!-- tf, eigen -->
-  <depend stack="ros" /> <!-- rosconsole, roscpp, message_filters -->
-  <depend stack="visualization_common" /> <!-- visualization_msgs -->
-
-
+  <depend stack="ros" />
 </stack>
