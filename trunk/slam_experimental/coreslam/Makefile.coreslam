@@ -1,22 +1,20 @@
 all: installed
 
 SVN_DIR = build/coreslam-svn
-SVN_URL = http://openslam.informatik.uni-freiburg.de/data/svn/coreslam/
+SVN_URL = http://openslam.informatik.uni-freiburg.de/data/svn/coreslam/trunk/
 SVN_PATCH = coreslam.patch
-SVN_REVISION = -r 12
+SVN_REVISION = -N -r 12
 include $(shell rospack find mk)/svn_checkout.mk
 
 CMAKE = cmake 
 CMAKE_ARGS = -D CMAKE_BUILD_TYPE=RELEASE \
-             -D CMAKE_INSTALL_PREFIX=`rospack find coreslam`/coreslam
+             -D CMAKE_INSTALL_PREFIX=`rospack find coreslam`/
 
 installed: wiped $(SVN_DIR) patched
-	mkdir -p $(SVN_DIR)/build
-	cd $(SVN_DIR)/build && $(CMAKE) $(CMAKE_ARGS)
-	mkdir -p lib
-	cp $(SOURCE_DIR)/*.a lib
-	mkdir -p include
-	cp $(SVN_DIR)/CoreSLAM.h include
+	cd $(SVN_DIR) && cmake . && make
+	cd ../.. 
+	cp $(SVN_DIR)/libCoreSLAM.a lib/libCoreSLAM.a
+	cp $(SVN_DIR)/CoreSLAM.h include/CoreSLAM.h
 	touch installed
 
 wipe: clean
