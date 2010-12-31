@@ -207,7 +207,7 @@ SlamCoreSlam::addScan(const sensor_msgs::LaserScan& scan, ts_position_t& odom_po
         ranges.nb_points++;
       }
     }
-    ts_map_update(&ranges, &ts_map_, &state_.position, 50, hole_width_);  
+    ts_map_update(&ranges, &ts_map_, &state_.position, 50, (int)(hole_width_*1000));  
     ROS_DEBUG("Update step, %d, now at (%f, %f, %f)",laser_count_, state_.position.x, state_.position.y, state_.position.theta);
   }else{
     ts_sensor_data_t data;
