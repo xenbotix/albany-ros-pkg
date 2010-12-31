@@ -130,7 +130,7 @@ SlamCoreSlam::getOdomPose(ts_position_t& ts_pose, const ros::Time &t)
   ts_pose.y = odom_pose.getOrigin().y()*METERS_TO_MM + ((TS_MAP_SIZE/2)*delta_*METERS_TO_MM);
   ts_pose.theta = (yaw * 180/M_PI);
 
-  ROS_INFO("ODOM POSE: %f, %f, %f", ts_pose.x, ts_pose.y, ts_pose.theta);
+  ROS_DEBUG("ODOM POSE: %f, %f, %f", ts_pose.x, ts_pose.y, ts_pose.theta);
 
   return true;
 }
@@ -226,7 +226,6 @@ SlamCoreSlam::addScan(const sensor_msgs::LaserScan& scan, ts_position_t& odom_po
   }
 
   odom_pose = state_.position;
-  ROS_INFO("Now at (%f, %f, %f)", state_.position.x, state_.position.y, state_.position.theta);
 
   return true;
 }
