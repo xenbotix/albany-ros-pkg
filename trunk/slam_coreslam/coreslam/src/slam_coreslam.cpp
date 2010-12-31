@@ -63,11 +63,11 @@ SlamCoreSlam::SlamCoreSlam():
   
   // Parameters needed for CoreSLAM
   if(!private_nh_.getParam("sigma_xy", sigma_xy_))
-    sigma_xy_ = 0.005;
+    sigma_xy_ = 0.1;
   if(!private_nh_.getParam("sigma_theta", sigma_theta_))
-    sigma_theta_ = 0.005;
+    sigma_theta_ = 0.35;
   if(!private_nh_.getParam("hole_width", hole_width_))
-    hole_width_ = 600;
+    hole_width_ = 0.6;
   if(!private_nh_.getParam("span", span_))
     span_ = 3;
   if(!private_nh_.getParam("delta", delta_))
@@ -168,9 +168,9 @@ SlamCoreSlam::initMapper(const sensor_msgs::LaserScan& scan)
 
   // new coreslam instance
   ts_map_init(&ts_map_);
-  ts_state_init(&state_, &ts_map_, &lparams_, &position_, sigma_xy_, sigma_theta_, hole_width_, 0);
+  ts_state_init(&state_, &ts_map_, &lparams_, &position_, (int)(sigma_xy_*1000), (int)(sigma_theta_*180/M_PI), (int)(hole_width_*1000), 0);
   
-  ROS_INFO("Initialized with sigma_xy=%f, sigma_theta=%f, hole_width=%d, delta=%f",sigma_xy_, sigma_theta_, hole_width_, delta_);
+  ROS_INFO("Initialized with sigma_xy=%f, sigma_theta=%f, hole_width=%f, delta=%f",sigma_xy_, sigma_theta_, hole_width_, delta_);
   ROS_INFO("Initialization complete");
   return true; 
 }

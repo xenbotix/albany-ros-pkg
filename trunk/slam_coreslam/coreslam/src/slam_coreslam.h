@@ -92,7 +92,7 @@ class SlamCoreSlam
     // parameters for coreslam
     double sigma_xy_;
     double sigma_theta_;
-    int hole_width_;
+    double hole_width_;
     int span_;
     double delta_;
 
