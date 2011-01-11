@@ -1,0 +1,9 @@
+<launch>
+	
+	<node name="ar_pose" pkg="ar_pose" type="ar_multi" respawn="false" output="screen">
+		<param name="marker_pattern_list" type="string" value="data/objects_office"/>
+        <param name="marker_width" type="double" value="150"/>
+		<param name="threshold" type="int" value="100"/>
+	</node>
+
+</launch>
