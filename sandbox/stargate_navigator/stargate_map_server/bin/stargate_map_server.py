@@ -95,7 +95,7 @@ class stargate_map:
                 
             elif el[0] == "I":
                 # it's an identifier
-                sector, pose = self.extractPoses(el[2:]).items()[0]
+                sector, pose = self.extractPoses(el[2:], True).items()[0]
                 self.identifiers[el[1]] = identifier_data(el[1], sector, pose)
             elif el[0] == "B":
                 # beginning point
@@ -104,7 +104,7 @@ class stargate_map:
         # do broadcast of tf
         self.br = tf.TransformBroadcaster()
 
-    def extractPoses(self, l):
+    def extractPoses(self, l, ident=False):
         """ Extract names and poses from map file line. """
         poses = dict()
         while len(l) >= 7:
@@ -112,7 +112,10 @@ class stargate_map:
             p.position.x = float(l[1])
             p.position.y = float(l[2])
             p.position.z = float(l[3])
-            q = quaternion_from_euler(float(l[4]),float(l[5]),float(l[6]))
+            if ident:
+                q = quaternion_from_euler(float(l[4])+1.57,float(l[5]),float(l[6])+1.57)
+            else:
+                q = quaternion_from_euler(float(l[4]),float(l[5]),float(l[6]))
             p.orientation.x = q[0]
             p.orientation.y = q[1]
             p.orientation.z = q[2]
