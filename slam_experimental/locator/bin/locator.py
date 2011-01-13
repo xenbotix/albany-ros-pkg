@@ -15,7 +15,6 @@ class Locator:
         self.pose = Pose2D()
         self.map_frame = rospy.get_param('map_frame', 'map')
         self.odom_frame = rospy.get_param('odom_frame', 'odom')
-        self.base_frame = rospy.get_param('base_frame', 'base_link')
         # load map (TODO: this is temporary, remove when map_server is ready)
 #       self.markers = { 0: ["ILS_OFFICE",0.4064,0.6858,1.22,0,0,-1.570796] }
         self.markers = { 0: ["ILS_OFFICE",-0.4064,-1.22,0.6858,-1.570796,0,0] }
@@ -31,14 +30,32 @@ class Locator:
                          3: ["Office_Tomek_2",-3.8,-1.22,5.31,-1.570796,0,0],
                          4: ["Office_Mail",0.71,-1.22,0.69,-1.570796,3.14159,0],
                          5: ["Office_Exit",-0.66,-1.22,0,-1.570796,-1.570796,0] }
+
+        
+        self.markers = { 0: ["4x4_1",-1,-1,1,-1.570796,0,0] }
         # setup publishers and subscribers
         rospy.Subscriber('ar_pose_marker', ARMarkers, self.localize)
         self.broadcaster = tf.TransformBroadcaster()
         self.listener = tf.TransformListener()        
        
     def localize(self, data):
+        # new temporary pose
+        pose = Pose2D()
+        pose.x = self.pose.x
+        pose.y = self.pose.y
+        pose.theta = self.pose.theta
+        d = 0
+        # iterate through markers
         for marker in data.markers:
+            # TODO: take most center-marker as best
             if marker.id in self.markers.keys():
+                dist = (marker.pose.pose.position.x**2 + marker.pose.pose.position.y**2)**0.5
+                print dist
+                if dist < d and d != 0:
+                    print "skip localization"
+                    continue
+                else:
+                    d = dist
                 try:
                     (frame, xp, yp, zp, xr, yr, zr) = self.markers[marker.id]
                     # get odom->map transform (via ar->map->odom)
@@ -57,29 +74,35 @@ class Locator:
                     # update odom->map pose
                     q = p.pose.orientation
                     (phi, psi, theta) = tf.transformations.euler_from_quaternion([q.x,q.y,q.z,q.w])
-                    self.pose.x = p.pose.position.x
-                    self.pose.y = p.pose.position.y
-                    self.pose.theta = theta
-                    if self.pose.theta > pi:
-                        self.pose.theta -= 2*pi
-                    elif self.pose.theta < -pi:
-                        self.pose.theta += 2*pi
-                    print "Localized against marker:", frame, self.pose
+                    pose.x = p.pose.position.x
+                    pose.y = p.pose.position.y
+                    pose.theta = theta
+                    if pose.theta > pi:
+                        pose.theta -= 2*pi
+                    elif pose.theta < -pi:
+                        pose.theta += 2*pi
+                    print "Localized against marker:", frame, pose
                 except (tf.LookupException, tf.ConnectivityException):
                     continue
+        if d > 0:
+            self.pose = pose
 
     def update(self):
-        self.broadcaster.sendTransform((self.pose.x, self.pose.y, 0),
-                                       tf.transformations.quaternion_from_euler(0, 0, self.pose.theta),
+        #self.broadcaster.sendTransform((self.pose.x, self.pose.y, 0),
+        #                              tf.transformations.quaternion_from_euler(0, 0, self.pose.theta),
+        x = -cos(self.pose.theta)*self.pose.x - sin(self.pose.theta)*self.pose.y
+        y = sin(self.pose.theta)*self.pose.x - cos(self.pose.theta)*self.pose.y
+        self.broadcaster.sendTransform((x, y, 0),
+                                       tf.transformations.quaternion_from_euler(0, 0, -self.pose.theta),
                                        rospy.Time.now(),
-                                       self.map_frame, self.odom_frame)
+                                       #self.map_frame, self.odom_frame)
+                                       self.odom_frame, self.map_frame)
 
 if __name__ == '__main__':
     rospy.init_node('locator')
     locator = Locator()
-    r = rospy.get_param('rate', 10.0)
-    rate = rospy.Rate(r)
+    r = rospy.Rate(rospy.get_param('rate', 10.0))
     while not rospy.is_shutdown():
         locator.update()
-        rate.sleep()
+        r.sleep()
 
