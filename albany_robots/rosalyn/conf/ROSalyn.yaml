@@ -1,6 +1,6 @@
 ---
 port: /dev/ttyUSB1
-rate: 15
+rate: 5
 sensors: {
     pml: {type: "pml", servo_id: 3},
     v_mon: {type: "v_monitor", id: 1}
