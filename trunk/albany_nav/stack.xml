@@ -6,5 +6,11 @@
   <license>BSD</license>  
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/albany_nav</url>
-  <depend stack="ros" />
+  <depend stack="ccny_vision" /> <!-- ar_pose -->
+  <depend stack="common_msgs" /> <!-- nav_msgs, sensor_msgs, geometry_msgs -->
+  <depend stack="geometry" /> <!-- tf -->
+  <depend stack="laser_drivers" /> <!-- hokuyo_node -->
+  <depend stack="navigation" /> <!-- move_base, map_server -->
+  <depend stack="ros" /> <!-- std_msgs, rosconsole, rospy, roscpp, message_filters -->
+  <depend stack="vanadium_drivers" /> <!-- arbotix -->
 </stack>
