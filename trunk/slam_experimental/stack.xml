@@ -1,8 +1,0 @@
-<stack>
-  <description brief="slam_experimental">slam_experimental</description>
-  <author>Maintained by Michael Ferguson</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/slam_experimental</url>
-  <depend stack="ros" />
-</stack>
