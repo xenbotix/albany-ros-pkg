@@ -18,7 +18,7 @@ svn co https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/tags/stac
 #echo '. /opt/ros/cturtle/setup.sh' >> ~/.bashrc
 #echo 'export ROS_PACKAGE_PATH=~/ros:${ROS_PACKAGE_PATH}' >> ~/.bashrc
 
-echo "You should add the following lines to your ~/.bashrc:"
-echo "  . /opt/ros/<distro>/setup.sh where <distro> is cturtle or unstable"
-echo "  export ROS_PACKAGE_PATH=~/ros:${ROS_PACKAGE_PATH}"
-echo "and then 'source ~/.bashrc' and run install.sh"
+echo 'You should add the following lines to your ~/.bashrc:'
+echo '  . /opt/ros/<distro>/setup.sh where <distro> is cturtle or unstable'
+echo '  export ROS_PACKAGE_PATH=~/ros:${ROS_PACKAGE_PATH}'
+echo 'and then 'source ~/.bashrc' and run install.sh'
