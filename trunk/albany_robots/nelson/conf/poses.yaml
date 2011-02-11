@@ -1,0 +1,13 @@
+Useless: -1.0, -1.0, {head_tilt_joint: 565, head_tilt2_joint: 300, head_pan_joint: 220, bottom_lip: 595, r_eyebrow: 350, l_eyebrow: 680}
+Understimulated: 0.0, -1.0, {r_shoulder_lift_joint: 240, l_shoulder_lift_joint: 800, head_pan_joint: 512, head_tilt_joint: 600, top_lip: 550, bottom_lip: 490, r_eyebrow: 512, l_eyebrow: 512}
+Content: 1.0, -1.0, {r_shoulder_lift_joint: 240, l_shoulder_lift_joint: 800, head_tilt_joint: 600, head_tilt2_joint: 600, r_eyebrow: 640, l_eyebrow: 380}
+Apathetic: -0.4, -0.5, {bottom_lip: 600, r_eyebrow: 512, l_eyebrow: 512}
+Patient: 0.4, -0.5, {r_shoulder_lift_joint: 320, r_elbow_flex_joint: 250, l_shoulder_lift_joint: 700, l_elbow_flex_joint: 770, top_lip: 570, bottom_lip: 400, r_eyebrow: 640, l_eyebrow: 380}
+Confused: -0.8, 0.0, {r_shoulder_lift_joint: 240, l_shoulder_lift_joint: 800, head_tilt_joint: 600, head_tilt2_joint: 600, r_eyebrow: 640, l_eyebrow: 640}
+Neutral: 0.0, 0.0, {r_shoulder_lift_joint: 240, l_shoulder_lift_joint: 800, head_tilt_joint: 600, head_tilt2_joint: 600}
+Informed: 0.8, 0.0, {head_tilt_joint: 512, top_lip: 500, bottom_lip: 400, r_eyebrow: 640, l_eyebrow: 380}
+Impatient: -0.4, 0.5, {r_shoulder_lift_joint: 200, r_shoulder_pan_joint: 600, r_elbow_flex_joint: 200, l_shoulder_lift_joint: 850, l_shoulder_pan_joint: 400, l_elbow_flex_joint: 850, bottom_lip: 600, r_eyebrow: 350, l_eyebrow: 680}
+Curious: 0.4, 0.5, {r_shoulder_lift_joint: 712, r_elbow_flex_joint: 300, r_gripper_joint: 600, l_shoulder_lift_joint: 850, l_shoulder_pan_joint: 400, l_elbow_flex_joint: 850, head_tilt_joint: 600, head_tilt2_joint: 600, top_lip: 500, bottom_lip: 400, r_eyebrow: 640, l_eyebrow: 380}
+Frustrated: -1.0, 1.0, {r_shoulder_lift_joint: 680, r_shoulder_pan_joint: 600, r_elbow_flex_joint: 300, l_shoulder_lift_joint: 330, l_shoulder_pan_joint: 400, l_elbow_flex_joint: 700, head_tilt_joint: 600, head_tilt2_joint: 600, l_eyebrow: 680}
+Overstimulated: 0.0, 1.0, {r_shoulder_lift_joint: 765, l_shoulder_lift_joint: 250, head_tilt_joint: 600}
+Helpful: 1.0, 1.0, {head_tilt_joint: 600, head_tilt2_joint: 600, upper_lip: 480}

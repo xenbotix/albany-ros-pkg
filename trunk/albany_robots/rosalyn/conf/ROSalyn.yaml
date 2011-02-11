@@ -1,10 +1,7 @@
 ---
 port: /dev/ttyUSB1
-rate: 5
-sensors: {
-    pml: {type: "pml", servo_id: 3},
-    v_mon: {type: "v_monitor", id: 1}
-}
+read_rate: 5
+pml: {servo_id: 3},
 dynamixels: {
     head_pan_joint: {id: 1},
     head_tilt_joint: {id: 2, max_angle: 100, min_angle: -100}

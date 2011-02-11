@@ -1,0 +1,6 @@
+<launch>
+  <node name="magic_emotion_box" pkg="nelson" type="magic_emotion_box.py" output="screen">
+    <param name="poses" value="$(find nelson)/conf/poses.yaml"/>
+  </node>
+  <node name="emotion_controller" pkg="nelson" type="emotion_controller.py"/>
+</launch>
