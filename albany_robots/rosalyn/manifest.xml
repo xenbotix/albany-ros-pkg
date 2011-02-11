@@ -9,7 +9,7 @@
 
   <depend package="rospy"/>
   <depend package="irobot_create_2_1"/>
-  <depend package="arbotix"/>
+  <depend package="arbotix_python"/>
 </package>
 
 

@@ -4,7 +4,7 @@
 
   <!-- bring up a camera, create, arbotix --> 
   <include file="$(find albany_common)/launch/qc9000.launch" />
-  <node name="arbotix" pkg="arbotix" type="arbotix-node.py" output="screen">
+  <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
     <rosparam file="$(find rosalyn)/conf/ROSalyn.yaml" command="load" />
     <param name="port" value="/dev/ttyUSB0" />
   </node>
