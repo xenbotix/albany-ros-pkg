@@ -1,9 +1,0 @@
-/**
-\mainpage
-\htmlinclude manifest.html
-
-The coreslam package offers no code-level API.  All usage is intended to go
-through the command-line interface of the slam_coreslam node, which is
-documented in the wiki.
-
-*/
