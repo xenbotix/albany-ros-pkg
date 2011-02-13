@@ -15,7 +15,6 @@ from irobot_create_2_1.srv import *
 
 class BumpCheckState(smach.State):
     """ This class is a state which checks the status of the bumpers. """
-
     def __init__(self):
         smach.State.__init__(self, outcomes=['clear','left_collision','right_collision'])
         self.left_bump = False
@@ -36,6 +35,7 @@ class BumpCheckState(smach.State):
         self.right_bump = msg.bumpRight
 
 class WaitState(smach.State):
+    """ This class is a state that just waits a designated amount of time before continuing. """
     def __init__(self):
         smach.State.__init__(self, outcomes=['done'])
     def execute(self, userdata):
