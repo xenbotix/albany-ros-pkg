@@ -1,14 +1,10 @@
 <package>
-  <description brief="example">
-
-     example
-
-  </description>
+  <description brief="simple examples of how to move a robot"/>
   <author>Michael Ferguson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/example</url>
+  <url>http://ros.org/wiki/ex_move</url>
 
+  <depend package="rospy"/>
+  <depend package="geometry_msgs"/>
 </package>
-
-
