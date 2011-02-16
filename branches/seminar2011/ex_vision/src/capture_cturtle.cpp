@@ -1,6 +1,9 @@
 /* 
  * Example code of how to convert ROS images to OpenCV's IplImage
  * This is the solution to HW2, for cturtle release systems.
+ * 
+ * See also cv_bridge tutorials: 
+ *   http://www.ros.org/wiki/cv_bridge
  */
 
 #include <ros/ros.h>
