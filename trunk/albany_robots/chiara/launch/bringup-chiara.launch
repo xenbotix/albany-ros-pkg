@@ -1,0 +1,12 @@
+<launch>
+
+  <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
+      <rosparam file="$(find chiara)/params/chiara.yaml" command="load" />
+  </node>
+  <!--<node name="head_traj_controller" pkg="arbotix_controllers" type="traj_controller.py">
+      <rosparam param="joints">[head_pan_joint, head_tilt_joint]</rosparam>
+  </node>-->
+
+  <node name="ssc32" pkg="chiara" type="ssc32.py" />
+
+</launch>
