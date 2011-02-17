@@ -36,7 +36,7 @@ class ssc32:
     def setLed(self, led, value):
         """ Ex: setLed(GREEN, ON) """
         self.mutex.acquire()
-        self.write("#"+led+value+"\n")
+        self.ser.write("#"+led+value+"\n")
         self.mutex.release()
 
     def getButtons(self):
@@ -51,8 +51,8 @@ class ssc32:
             self.ser.flushInput()
         except:
             pass
-        self.write("AL BL CL\n")
-        b = [ int(self.read()) for i in range(3) ]
+        self.ser.write("AL BL CL\n")
+        b = [ int(self.ser.read()) for i in range(3) ]
         self.mutex.release()
         return b
         
@@ -68,12 +68,18 @@ if __name__=="__main__":
     # led subscribers
     # TODO
 
-    r = rate(30)
+    r = rospy.Rate(30)
     while not rospy.is_shutdown():
         # publish buttons
         b = ssc.getButtons()
         gr_button.publish(Bool(b[0]==1))
+        if b[0] == 1:
+            ssc.setLed(GREEN,ON)
         rd_button.publish(Bool(b[1]==1))
+        if b[0] == 1:
+            ssc.setLed(BLUE,ON)
         yl_button.publish(Bool(b[2]==1))
+        if b[0] == 1:
+            ssc.setLed(RED,ON)
         r.sleep()
 
