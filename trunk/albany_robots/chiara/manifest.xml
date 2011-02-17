@@ -11,6 +11,5 @@
   <depend package="rospy"/>
   <depend package="std_msgs"/>
   <depend package="arbotix_python"/>
-  <depend package="arbotix_controllers"/>
 </package>
 
