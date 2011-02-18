@@ -13,9 +13,9 @@ from std_msgs.msg import Bool
 
 import serial, thread
 
-GREEN = "12"
 RED = "13"
 YELLOW = "14"
+GREEN = "12"
 BLUE = "15"
 
 ON = "H"
@@ -72,14 +72,21 @@ if __name__=="__main__":
     while not rospy.is_shutdown():
         # publish buttons
         b = ssc.getButtons()
-        gr_button.publish(Bool(b[0]==1))
-        if b[0] == 1:
+        print b
+        gr_button.publish(Bool(b[0]!=1))
+        if b[0] != 1:
             ssc.setLed(GREEN,ON)
-        rd_button.publish(Bool(b[1]==1))
-        if b[0] == 1:
-            ssc.setLed(BLUE,ON)
-        yl_button.publish(Bool(b[2]==1))
-        if b[0] == 1:
+        else:
+            ssc.setLed(GREEN,OFF)
+        rd_button.publish(Bool(b[1]!=1))
+        if b[1] != 1:
             ssc.setLed(RED,ON)
+        else:
+            ssc.setLed(RED,OFF)
+        yl_button.publish(Bool(b[2]!=1))
+        if b[2] != 1:
+            ssc.setLed(YELLOW,ON)
+        else:
+            ssc.setLed(YELLOW,OFF)
         r.sleep()
 
