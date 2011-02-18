@@ -29,7 +29,7 @@ class ssc32:
         self.mutex.acquire()
         self.ser.baudrate = baud
         self.ser.port = port
-        #self.ser.timeout =
+        self.ser.timeout = 0.1
         self.ser.open()
         self.mutex.release()
 
