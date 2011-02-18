@@ -36,7 +36,7 @@ class ssc32:
     def setLed(self, led, value):
         """ Ex: setLed(GREEN, ON) """
         self.mutex.acquire()
-        self.ser.write("#"+led+value+"\n")
+        self.ser.write("#"+led+value+"\r\n")
         self.mutex.release()
 
     def getButtons(self):
@@ -51,7 +51,7 @@ class ssc32:
             self.ser.flushInput()
         except:
             pass
-        self.ser.write("AL BL CL\n")
+        self.ser.write("AL BL CL\r\n")
         b = [ int(self.ser.read()) for i in range(3) ]
         self.mutex.release()
         return b
