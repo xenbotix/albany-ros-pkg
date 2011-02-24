@@ -1,7 +1,10 @@
 ---
 port: /dev/ttyUSB1
 baud: 1000000
-use_sync: False
+read_rate: 5
+write_rate: 20
+sync_read: False
+sync_write: False
 dynamixels: {
     r_shoulder_lift_joint: {id: 1},
     r_shoulder_pan_joint: {id: 2},
@@ -11,9 +14,9 @@ dynamixels: {
     l_shoulder_pan_joint: {id: 6, invert: 1},
     l_elbow_flex_joint: {id: 7},
     l_gripper_joint: {id: 8},
-    head_pan_joint: {id: 9, max_angle: 100, min_angle: -100}, 
-    head_tilt_joint: {id: 10, invert: 1, neutral: 562, max_angle: 30, min_angle: -30},
-    head_tilt2_joint: {id: 11, neutral: 542, max_angle: 20, min_angle: -18},
+    head_pan_joint: {id: 9, max_angle: 100, min_angle: -100, max_speed: 45}, 
+    head_tilt_joint: {id: 10, invert: 1, neutral: 562, max_angle: 30, min_angle: -30, max_speed: 25},
+    head_tilt2_joint: {id: 11, neutral: 542, max_angle: 20, min_angle: -18, max_speed: 25},
     eye_tilt: {id: 12, max_angle: 100, min_angle: -100, readable: False},
     r_eye_pan: {id: 13, max_angle: 45, min_angle: -45, readable: False},
     l_eye_pan: {id: 14, max_angle: 45, min_angle: -45, readable: False},

@@ -8,16 +8,18 @@ import rospy
 
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
-from arbotix.srv import *
+from arbotix_msgs.srv import *
 
 class walkWithMe():
     def __init__(self, name='WalkWithMe'):
         self.name = name
         self.pitch = 0
         self.angle = 0
+        self.x_speed = 0.0
+        self.r_speed = 0.0
         
         # startup and subscribe to joint_states
-        rospy.init_node(name, anonymous=True)
+        rospy.init_node(name)
         rospy.Subscriber('joint_states', JointState, self.callback)
         rospy.on_shutdown(self.cleanup)
         
@@ -26,7 +28,7 @@ class walkWithMe():
        
         # need to relax the arm to pull him around by
         for servo in ["l_shoulder_lift_joint","r_shoulder_lift_joint","l_shoulder_pan_joint","r_shoulder_pan_joint","l_elbow_flex_joint","r_elbow_flex_joint","l_gripper_joint","r_gripper_joint"]:
-            x = rospy.ServiceProxy(servo+"_relax",Relax)
+            x = rospy.ServiceProxy(servo+"/relax",Relax)
             x()
 
         rospy.loginfo('walk_with_me.py initialized')
@@ -49,7 +51,7 @@ class walkWithMe():
         else:
             self.x_speed = 0.0
             self.r_speed = 0.0
-        #print self.x_speed, self.r_speed
+        print self.x_speed, self.r_speed
 
     def cleanup(self):
         twist = Twist()

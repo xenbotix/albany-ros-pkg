@@ -4,5 +4,13 @@
   <node name="arbotix" pkg="arbotix_python" type="driver.py" output="screen">
       <rosparam file="$(find nelson)/conf/nelson.yaml" command="load" />
   </node>
+  <node name="face_controller" pkg="arbotix_controllers" type="joint_controller.py" output="screen">
+      <rosparam param="joints">[eye_tilt, r_eye_pan, l_eye_pan, eyelids, top_lip, bottom_lip, r_eyebrow, l_eyebrow]</rosparam>
+      <remap from="cmd_joints" to="face_controller/command"/>
+  </node>
+  <node name="neck_controller" pkg="arbotix_controllers" type="joint_controller.py" output="screen">
+      <rosparam param="joints">[head_pan_joint, head_tilt_joint, head_tilt2_joint]</rosparam>
+      <remap from="cmd_joints" to="neck_controller/command"/>
+  </node>
   <node name="wakeup" pkg="nelson" type="wakeup.py" />
 </launch>
