@@ -19,7 +19,7 @@
   Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import roslib; roslib.load_manifest('albany_common')
+import roslib; roslib.load_manifest('nelson')
 import rospy
 import wx
 
@@ -102,7 +102,8 @@ class faceControllerGUI(wx.Frame):
         self.Show(True)
 
         #self.panService = rospy.ServiceProxy('head_pan_setangle',SetAngle)
-        self.pub = rospy.Publisher('cmd_joints', JointState)
+        self.facepub = rospy.Publisher('face_controller/command', JointState)
+        self.neckpub = rospy.Publisher('neck_controller/command', JointState)
 
     def onClose(self, event):
         self.timer.Stop()
@@ -121,11 +122,16 @@ class faceControllerGUI(wx.Frame):
     def onTimer(self, event=None):
         # send updates
         j = JointState()
-        j.name = ["head_pan_joint", "head_tilt_joint", "eye_tilt", "r_eye_pan", "l_eye_pan", 
-                       "eyelids", "top_lip", "bottom_lip", "r_eyebrow", "l_eyebrow"]
-        j.position = [self.pan/100.0, self.tilt/100.0, self.eye_tilt.GetValue()/100.0, self.r_eye_pan.GetValue()/100.0, self.l_eye_pan.GetValue()/100.0,
+        j.name = ["head_pan_joint", "head_tilt_joint", "head_tilt2_joint"]
+        j.position = [self.pan/100.0, self.tilt/100.0, 0.0]
+        j.velocity = [0.2 for joint in j.name]
+        self.neckpub.publish(j)
+        j = JointState()
+        j.name = ["eye_tilt", "r_eye_pan", "l_eye_pan", "eyelids", "top_lip", "bottom_lip", "r_eyebrow", "l_eyebrow"]
+        j.position = [self.eye_tilt.GetValue()/100.0, self.r_eye_pan.GetValue()/100.0, self.l_eye_pan.GetValue()/100.0,
                         0, self.top_lip.GetValue()/100.0, self.bot_lip.GetValue()/100.0, self.r_eyebrow.GetValue()/100.0, self.l_eyebrow.GetValue()/100.0]
-        self.pub.publish(j)
+        j.velocity = [0.0 for joint in j.name]
+        self.facepub.publish(j)
         
 if __name__ == '__main__':
     # initialize and listen to joint_states topic

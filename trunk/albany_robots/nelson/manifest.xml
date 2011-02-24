@@ -15,6 +15,7 @@
   <depend package="geometry_msgs"/>
   <depend package="social_msgs"/>
   <depend package="arbotix_python"/>
+  <depend package="arbotix_msgs"/>
   <depend package="tf"/>
   <depend package="irobot_create_2_1"/>
 

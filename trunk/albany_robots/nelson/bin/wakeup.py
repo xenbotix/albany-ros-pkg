@@ -9,19 +9,20 @@ import rospy
 import time
 
 from sensor_msgs.msg import JointState
-from arbotix.srv import *
+from arbotix_msgs.srv import *
 
 neck = {"head_pan_joint":0.0, "head_tilt_joint": 0.0, "head_tilt2_joint":0.2 }
 
 rospy.init_node('wakeup')
-cmd_joints = rospy.Publisher('cmd_joints', JointState)
+cmd_joints = rospy.Publisher('neck_controller/command', JointState)
 
 r = rospy.Rate(1)
-for i in range(10):
+for i in range(5):
     j = JointState()
     for servo in neck.keys():
         j.name.append(servo)
         j.position.append(neck[servo])
+        j.velocity.append(0.1)
     cmd_joints.publish(j)
     r.sleep()
 

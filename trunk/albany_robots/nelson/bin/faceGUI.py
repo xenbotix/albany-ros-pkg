@@ -3,7 +3,7 @@
 """ Simple virual face
     Michael E. Ferguson, 2009-2010. """
 
-import roslib; roslib.load_manifest('expression')
+import roslib; roslib.load_manifest('nelson')
 import rospy
 
 from sensor_msgs.msg import JointState

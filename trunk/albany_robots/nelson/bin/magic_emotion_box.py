@@ -76,7 +76,7 @@ class MagicEmotionBox:
         rospy.init_node("magic_emotion_box")
         self.controller = MagicEmotionController(rospy.get_param("~poses"))
         rospy.Subscriber("affective_state", AffectiveState, self.affectCb)
-        self.pub = rospy.Publisher("cmd_joints", JointState)
+        self.pub = rospy.Publisher("face_controller/command", JointState)
         rospy.spin()
 
     def affectCb(self, msg):
@@ -93,9 +93,14 @@ class MagicEmotionBox:
         msg = JointState()
         msg.name = list()
         msg.position = list()        
-        for servo, value in pose.items():
+        for servo in ["eye_tilt", "r_eye_pan", "l_eye_pan", "eyelids", "top_lip", "bottom_lip", "r_eyebrow", "l_eyebrow"]:
+        #for servo, value in pose.items():
             msg.name.append(servo)  
-            msg.position.append( (value-512)*(5.2359877/1024.0) ) # 5.23 is rad(300)
+            try:
+                msg.position.append( (pose[servo]-512)*(5.2359877/1024.0) ) # 5.23 is rad(300)
+            except:
+                msg.position.append(0)
+            msg.velocity.append(0.0)
         self.pub.publish(msg)
 
 
