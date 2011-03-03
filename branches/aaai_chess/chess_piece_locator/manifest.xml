@@ -1,0 +1,14 @@
+<package>
+  <description brief="chess_piece_locator">
+
+     chess_piece_locator
+
+  </description>
+  <author>james</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/chess_piece_locator</url>
+
+</package>
+
+
