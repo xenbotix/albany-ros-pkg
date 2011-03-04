@@ -11,8 +11,8 @@ svn co https://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/teleop_twist_
 svn co https://brown-ros-pkg.googlecode.com/svn/tags/brown-ros-pkg/irobot_create_2_1 irobot_create_2_1
 
 # usb_cam
-cd ~/ros; mkdir bosch-ros-pkg; cd bosch-ros-pkg
-svn co https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/tags/stacks/bosch_drivers/bosch_drivers-0.1.0/ .
+#cd ~/ros; mkdir bosch-ros-pkg; cd bosch-ros-pkg
+#svn co https://bosch-ros-pkg.svn.sourceforge.net/svnroot/bosch-ros-pkg/tags/stacks/bosch_drivers/bosch_drivers-0.1.0/ .
 
 # add a few things to your setup
 echo '. /opt/ros/diamondback/setup.sh' >> ~/.bashrc
