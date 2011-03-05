@@ -7,65 +7,62 @@
 **/
 
 #include <iostream>
-#include "ros/ros.h"
+#include <ros/ros.h>
 
-#include "sensor_msgs/Image.h"
-#include "sensor_msgs/PointCloud2.h"
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/PointCloud2.h>
 
-#include "opencv/cv.h"
-#include "opencv/highgui.h"
-#include "cv_bridge/cv_bridge.h"
-#include "tf/transform_broadcaster.h"
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include <cv_bridge/cv_bridge.h>
+#include <tf/transform_broadcaster.h>
 
-#include "pcl/io/io.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
+#include <pcl/io/io.h>
 
 using namespace std;
+
+//The policy merges kinect messages with approximately equal timestamp into one callback 
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::PointCloud2> CameraSyncPolicy;
 
 class ChessBoardLocator
 {
   public:
-    ChessBoardLocator(ros::NodeHandle & n):n_ (n)
+    ChessBoardLocator(ros::NodeHandle & n): nh_ (n),
+        image_sub_ (nh_, "/camera/rgb/image_color", 3),
+        info_sub_(nh_, "/camera/rgb/camera_info", 3),
+        cloud_sub_(nh_, "/camera/depth/points2", 3),
+        sync_(CameraSyncPolicy(10), image_sub_, info_sub_, cloud_sub_)
     {
-        // create a window to display results in
+        // temporary code: create a window to display results in
         cv::namedWindow("chess_board_locator");
 
-        // tf transforms
-        
-
-        // register callbacks        
-        image_sub_ = n.subscribe("/camera/rgb/image_color", 1, &ChessBoardLocator::image_cb, this);
-        depth_sub_ = n.subscribe("/camera/depth/points2", 1, &ChessBoardLocator::depth_cb, this);
+        // ApproximateTime takes a queue size as its constructor argument, hence CameraSyncPolicy(10)
+        sync_.registerCallback(boost::bind(&ChessBoardLocator::cameraCallback, this, _1, _2, _3));
     }
 
     /* 
-     * Store the latest point cloud
+     * Determine transform for chess board
      */
-    void depth_cb ( const sensor_msgs::PointCloud2ConstPtr& cloud )
+    void cameraCallback ( const sensor_msgs::ImageConstPtr& image,
+                          const sensor_msgs::CameraInfoConstPtr& info,
+                          const sensor_msgs::PointCloud2ConstPtr& cloud)
     {
-        depth_ = cloud;
-    }
-
-    /* 
-     * Determine transform
-     */
-    void image_cb ( const sensor_msgs::Image& image )
-    {
-        //rgb_ = image;
-
         try
         {
-            // bgr8 is the pixel encoding -- 8 bits per color, organized as blue/green/red
-            bridge = cv_bridge::toCvCopy(image, "bgr8"); //"8UC1"); //"bgr8");
+            bridge_ = cv_bridge::toCvCopy(image, "bgr8");
         }
         catch(cv_bridge::Exception& e)
         {
-            // all print statements should use a ROS_ form, don't cout!
-            ROS_ERROR("Conversion failed");
+           ROS_ERROR("Conversion failed");
         }
 
         cv::Mat src, dst, cdst;
-        //cv::medianBlur(bridge->image, bridge->image, 5);
-        cv::cvtColor(bridge->image, src, CV_BGR2GRAY);
+        cv::cvtColor(bridge_->image, src, CV_BGR2GRAY);
         cv::Canny(src, dst, 40, 200,3); 
         cv::cvtColor(dst, cdst, CV_GRAY2BGR);
 
@@ -77,25 +74,28 @@ class ChessBoardLocator
             cv::line( cdst, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
         }
 
-
-        // show the image
-        cv::imshow("chess_board_locator", cdst); //bridge->image);
+        // temporary code: show the image
+        cv::imshow("chess_board_locator", cdst);
         cv::waitKey(3);
 
         tf::Transform transform;
         transform.setOrigin( tf::Vector3(0.0, 0.0, 0.0) );
         transform.setRotation( tf::Quaternion(0, 0, 0) );
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "openni_camera", "chess_board"));
+        br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "openni_camera", "chess_board"));
+
+        cv::imwrite("image.png", cdst);
+
         ROS_INFO("published");
     }
 
   private: 
-    ros::Subscriber             image_sub_; 
-    sensor_msgs::PointCloud2ConstPtr    depth_;
-    ros::Subscriber             depth_sub_; 
-    ros::NodeHandle             n_;
-    tf::TransformBroadcaster    br;
-    cv_bridge::CvImagePtr bridge;
+    ros::NodeHandle nh_;
+    message_filters::Subscriber<sensor_msgs::Image> image_sub_; 
+    message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub_;
+    message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub_;
+    message_filters::Synchronizer<CameraSyncPolicy> sync_;
+    tf::TransformBroadcaster    br_;
+    cv_bridge::CvImagePtr bridge_;
 };
 
 int main (int argc, char **argv)
