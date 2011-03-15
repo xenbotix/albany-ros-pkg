@@ -1,5 +1,0 @@
-gst_sphinx:
-  debian: gstreamer0.10-pocketsphinx
-  ubuntu: 
-    10.04: gstreamer0.10-pocketsphinx
-    10.10: gstreamer0.10-pocketsphinx
