@@ -1,0 +1,6 @@
+# current location and data on piece
+chess_piece start
+# location to move piece to
+geometry_msgs/PoseStamped end
+---
+bool success
