@@ -7,7 +7,7 @@
   <depend package="rospy"/>
   <depend package="std_msgs"/>
   <depend package="std_srvs"/>
-  <rosdep name="gstream0.10-pocketsphinx"/>
+  <rosdep name="gst_sphinx"/>
 </package>
 
 

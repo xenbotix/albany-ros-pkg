@@ -1,3 +1,3 @@
-gstream0.10-pocketsphinx:
+gst_sphinx:
   debian: gstream0.10-pocketsphinx
   ubuntu: gstream0.10-pocketsphinx
