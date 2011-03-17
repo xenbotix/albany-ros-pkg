@@ -1,9 +1,11 @@
 ---
 port: /dev/ttyUSB1
 read_rate: 5
-pml: {servo_id: 3},
+pml: {servo_id: 3}
 dynamixels: {
     head_pan_joint: {id: 1},
     head_tilt_joint: {id: 2, max_angle: 100, min_angle: -100}
 }
-
+digital_sensors: { 
+    head_button: {pin: 1, value: 1, rate: 10}
+}
