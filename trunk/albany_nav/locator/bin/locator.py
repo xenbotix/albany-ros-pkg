@@ -30,9 +30,7 @@ class Locator:
                          3: ["Office_Tomek_2",-3.8,-1.22,5.31,-1.570796,0,0],
                          4: ["Office_Mail",0.71,-1.22,0.69,-1.570796,3.14159,0],
                          5: ["Office_Exit",-0.66,-1.22,0,-1.570796,-1.570796,0] }
-
-        
-        self.markers = { 0: ["4x4_1",-1,-1,1,-1.570796,0,0] }
+        #self.markers = { 0: ["4x4_1",-1,-1,1,-1.570796,0,0] }
         # setup publishers and subscribers
         rospy.Subscriber('ar_pose_marker', ARMarkers, self.localize)
         self.broadcaster = tf.TransformBroadcaster()
