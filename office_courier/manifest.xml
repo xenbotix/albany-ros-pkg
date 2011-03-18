@@ -1,0 +1,14 @@
+<package>
+  <description brief="office_courier">
+
+     office_courier
+
+  </description>
+  <author>Michael Ferguson</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/office_courier</url>
+
+</package>
+
+
