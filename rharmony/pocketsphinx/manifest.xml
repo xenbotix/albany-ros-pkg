@@ -6,6 +6,7 @@
   <url>http://ros.org/wiki/pocketsphinx</url>
   <depend package="rospy"/>
   <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/><!-- only needed for demo -->
   <depend package="std_srvs"/>
   <rosdep name="gstreamer_pocketsphinx"/>
 </package>
