@@ -5,6 +5,6 @@
     <param name="dict" value="$(find pocketsphinx)/demo/voice_cmd.dic"/>
   </node>
 
-  <node name="voice_cmd" pkg="pocketsphinx" type="voice_cmd.py" output="screen"/>
+  <node name="voice_cmd_vel" pkg="pocketsphinx" type="voice_cmd_vel.py" output="screen"/>
 
 </launch>
