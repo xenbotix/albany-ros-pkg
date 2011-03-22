@@ -42,12 +42,22 @@ class voice_cmd_vel:
 
         if msg.data.find("forward") > -1:    
             self.msg.linear.x = self.speed
-        elif msg.data.find("left") > -1:        
-            self.msg.angular.z = self.speed*2
+            self.msg.angular.z = 0
+        elif msg.data.find("left") > -1:
+            if self.msg.linear.x != 0:
+                if self.msg.angular.z < self.speed:
+                    self.msg.angular.z += 0.05
+            else:        
+                self.msg.angular.z = self.speed*2
         elif msg.data.find("right") > -1:    
-            self.msg.angular.z = -self.speed*2
+            if self.msg.linear.x != 0:
+                if self.msg.angular.z > -self.speed:
+                    self.msg.angular.z -= 0.05
+            else:        
+                self.msg.angular.z = -self.speed*2
         elif msg.data.find("back") > -1:
             self.msg.linear.x = -self.speed
+            self.msg.angular.z = 0
         elif msg.data.find("stop") > -1 or msg.data.find("halt") > -1:          
             self.msg = Twist()
         
