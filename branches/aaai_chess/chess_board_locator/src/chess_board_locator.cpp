@@ -28,17 +28,16 @@
 
 #include <pcl/io/io.h>
 #include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-#include <pcl/registration/registration.h>
 
 #include <pcl_ros/point_cloud.h>
-
-#include "geometry.h"
 
 using namespace std;
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> CameraSyncPolicy;
 typedef pcl::PointXYZ point;
 typedef pcl::PointXYZRGB color_point;
+
+#include "geometry.h"
+#include "cloud_matching.h"
 
 class ChessBoardLocator
 {
