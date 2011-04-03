@@ -9,6 +9,14 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/chess_piece_locator</url>
 
+  <depend package="roscpp" />
+  <depend package="pcl_ros" />
+
+  <export>
+    <nodelet plugin="${prefix}/nodelets.xml" />
+  </export>
+
+
 </package>
 
 
