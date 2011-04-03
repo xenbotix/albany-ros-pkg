@@ -22,10 +22,10 @@ class CameraTurnpike
         ros::NodeHandle nh("~");
 
         rgb_sub_ = n.subscribe("/camera/rgb/image_color", 10, &CameraTurnpike::rgb_cb, this);
-        depth_sub_ = n.subscribe("/camera/depth/points2", 10, &CameraTurnpike::depth_cb, this);
+        depth_sub_ = n.subscribe("/camera/rgb/points", 10, &CameraTurnpike::depth_cb, this);
 
         rgb_pub_ = nh.advertise<sensor_msgs::Image>("image", 10);
-        depth_pub_ = nh.advertise<sensor_msgs::PointCloud2>("points2", 10);
+        depth_pub_ = nh.advertise<sensor_msgs::PointCloud2>("points", 10);
 
         // advertise service to copy from input to output topics
         service_ = nh.advertiseService("trigger", &CameraTurnpike::service_callback, this);
