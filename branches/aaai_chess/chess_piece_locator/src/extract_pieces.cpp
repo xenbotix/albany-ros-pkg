@@ -37,7 +37,6 @@
 
 #include <pluginlib/class_list_macros.h>
 #include <pcl/io/io.h>
-//#include "pcl_ros/segmentation/extract_clusters.h"
 #include "extract_pieces.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +44,26 @@ void
 pcl_ros::PieceExtraction::onInit ()
 {
   // Call the super onInit ()
-  PCLNodelet::onInit ();
+  pnh_.reset (new ros::NodeHandle (getMTPrivateNodeHandle ()));
+        
+  // Parameters that we care about only at startup
+  pnh_->getParam ("max_queue_size", max_queue_size_);
+        
+  // ---[ Optional parameters
+  pnh_->getParam ("use_indices", use_indices_);
+  pnh_->getParam ("latched_indices", latched_indices_);
+  pnh_->getParam ("approximate_sync", approximate_sync_);
+
+  NODELET_DEBUG ("[%s::onInit] PCL Nodelet successfully created with the following parameters:\n"
+            " - approximate_sync : %s\n"
+            " - use_indices      : %s\n"
+            " - latched_indices  : %s\n"
+            " - max_queue_size   : %d",
+            getName ().c_str (), 
+            (approximate_sync_) ? "true" : "false",
+            (use_indices_) ? "true" : "false", 
+            (latched_indices_) ? "true" : "false", 
+            max_queue_size_);
 
   // ---[ Mandatory parameters
   double cluster_tolerance;
@@ -61,13 +79,9 @@ pcl_ros::PieceExtraction::onInit ()
     return;
   }
 
-  //private_nh.getParam ("use_indices", use_indices_);
-  pnh_->getParam ("publish_indices", publish_indices_);
-
-  if (publish_indices_)
-    pub_output_ = pnh_->advertise<PointIndices> ("output", max_queue_size_);
-  else
-    pub_output_ = pnh_->advertise<PointCloud> ("output", max_queue_size_);
+  // output
+  pub_output_ = pnh_->advertise<chess_msgs::ChessBoard>("output", max_queue_size_); 
+  //pub_output_ = pnh_->advertise<PointCloud>("output", max_queue_size_);
 
   // Enable the dynamic reconfigure service
   srv_ = boost::make_shared <dynamic_reconfigure::Server<PieceExtractionConfig> > (*pnh_);
@@ -176,46 +190,94 @@ pcl_ros::PieceExtraction::input_indices_callback (
   if (indices)
     indices_ptr = boost::make_shared <std::vector<int> > (indices->indices);
 
-  impl_.setInputCloud (cloud);
+  PointCloud cloud_transformed;
+  if (!pcl_ros::transformPointCloud (std::string("torso_link"), *cloud, cloud_transformed, tf_listener_))
+  {
+      //NODELET_ERROR ("[%s::computePublish] Error converting output dataset from %s to %s.", getName ().c_str (), output.header.frame_id.c_str (), tf_output_frame_.c_str ());
+      //return;
+  }
+  //cloud.reset (new PointCloud2 (cloud_transformed));
+
+  impl_.setInputCloud (cloud_transformed.makeShared());
   impl_.setIndices (indices_ptr);
 
   std::vector<PointIndices> clusters;
   impl_.extract (clusters);
 
-  if (publish_indices_)
+  // output ChessBoard
+  chess_msgs::ChessBoard cb;
+  for (size_t c = 0; c < clusters.size (); ++c)
   {
-    for (size_t i = 0; i < clusters.size (); ++i)
+    chess_msgs::ChessPiece p;
+    p.header.frame_id = cloud_transformed.header.frame_id;
+    
+    // find cluster centroid/color
+    float x = 0; float y = 0; float z = 0; int color = 0;
+    for (size_t i = 0; i < clusters[c].indices.size(); i++)
     {
-      if ((int)i >= max_clusters_)
-        break;
-      // TODO: HACK!!! We need to change the PointCloud2 message to add for an incremental sequence ID number.
-      clusters[i].header.stamp += ros::Duration (i * 0.001);
-      pub_output_.publish (boost::make_shared<const PointIndices> (clusters[i]));
+        int j = clusters[c].indices[i];
+        x += cloud_transformed.points[j].x;
+        y += cloud_transformed.points[j].y;
+        z += cloud_transformed.points[j].z;
+        unsigned char * rgb = (unsigned char *) &(cloud_transformed.points[j].rgb);
+        color += (rgb[0] + rgb[1] + rgb[2])/3;
+    }
+    x = x/clusters[c].indices.size();
+    y = y/clusters[c].indices.size();
+    z = z/clusters[c].indices.size();
+    // set centroid
+    p.pose.position.x = x;
+    p.pose.position.y = y;
+    p.pose.position.z = z;
+    // set color
+    color = color/clusters[c].indices.size();
+    p.color = color;
+    p.pts = clusters[c].indices.size();
+    if(color > 128){
+        p.type = chess_msgs::ChessPiece::WHITE_UNKNOWN;   
+    }else{
+        p.type = chess_msgs::ChessPiece::BLACK_UNKNOWN;
     }
 
-    NODELET_DEBUG ("[segmentAndPublish] Published %zu clusters (PointIndices) on topic %s", clusters.size (), pnh_->resolveName ("output").c_str ());
-  }
-  else
-  {
-    for (size_t i = 0; i < clusters.size (); ++i)
+    bool new_ = true;
+    // check if cluster overlaps any other
+    for (size_t j = 0; j < cb.pieces.size(); j++)
     {
-      if ((int)i >= max_clusters_)
-        break;
-      PointCloud output;
-      copyPointCloud (*cloud, clusters[i].indices, output);
+        if( (fabs(p.pose.position.x-cb.pieces[j].pose.position.x) < 0.012) &&
+            (fabs(p.pose.position.y-cb.pieces[j].pose.position.y) < 0.012) )
+        {
+            cb.pieces[j].pose.position.x = (cb.pieces[j].pose.position.x + p.pose.position.x)/2;
+            cb.pieces[j].pose.position.y = (cb.pieces[j].pose.position.y + p.pose.position.y)/2;
+            cb.pieces[j].pose.position.z = (cb.pieces[j].pose.position.z + p.pose.position.z)/2;  
+            cb.pieces[j].pts += p.pts;
+            cb.pieces[j].color = (cb.pieces[j].color + p.color)/2;
+            new_ = false;
+            break;
+        }
+    }  
+    
+    // add cluster
+    if (new_)
+        cb.pieces.push_back(p);
 
-      //PointCloud output_blob;     // Convert from the templated output to the PointCloud blob
-      //pcl::toROSMsg (output, output_blob);
-      // TODO: HACK!!! We need to change the PointCloud2 message to add for an incremental sequence ID number.
-      output.header.stamp += ros::Duration (i * 0.001);
-      // Publish a Boost shared ptr const data
-      pub_output_.publish (output.makeShared ());
-      NODELET_DEBUG ("[segmentAndPublish] Published cluster %zu (with %zu values and stamp %f) on topic %s",
-                     i, clusters[i].indices.size (), output.header.stamp.toSec (), pnh_->resolveName ("output").c_str ());
-    }
+    //NODELET_DEBUG ("[segmentAndPublish] Published cluster %zu (with %zu values and stamp %f) on topic %s",
+    //               i, clusters[i].indices.size (), output.header.stamp.toSec (), pnh_->resolveName ("output").c_str ());
+
   }
+  /*PointCloud cl;
+  cl.header.frame_id = cb.pieces[0].header.frame_id;
+  cl.header.stamp = cloud->header.stamp;
+  for(size_t i = 0; i < cb.pieces.size(); i++){
+    pcl::PointXYZRGB p;
+    p.x = cb.pieces[i].pose.position.x;
+    p.y = cb.pieces[i].pose.position.y;
+    p.z = cb.pieces[i].pose.position.z;
+    cl.push_back(p);
+  }
+  pub_output_.publish(cl);*/
+  pub_output_.publish(cb);
 }
 
 typedef pcl_ros::PieceExtraction PieceExtraction;
-PLUGINLIB_DECLARE_CLASS (pcl, PieceExtraction, PieceExtraction, nodelet::Nodelet);
+PLUGINLIB_DECLARE_CLASS (chess_piece_locator, PieceExtraction, PieceExtraction, nodelet::Nodelet);
 

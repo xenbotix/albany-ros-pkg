@@ -1,5 +1,5 @@
 <library path="lib/libpiece_extraction">
-  <class name="pcl_ros/PieceExtraction" type="PieceExtraction" base_class_type="nodelet::Nodelet">
+  <class name="chess_piece_locator/PieceExtraction" type="PieceExtraction" base_class_type="nodelet::Nodelet">
     <description>
       Extract pieces using euclidian clustering.
     </description>
