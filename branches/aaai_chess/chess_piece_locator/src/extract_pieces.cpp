@@ -231,9 +231,7 @@ pcl_ros::PieceExtraction::input_indices_callback (
     p.pose.position.z = z;
     // set color
     color = color/clusters[c].indices.size();
-    p.color = color;
-    p.pts = clusters[c].indices.size();
-    if(color > 128){
+    if(color > 100){
         p.type = chess_msgs::ChessPiece::WHITE_UNKNOWN;   
     }else{
         p.type = chess_msgs::ChessPiece::BLACK_UNKNOWN;
