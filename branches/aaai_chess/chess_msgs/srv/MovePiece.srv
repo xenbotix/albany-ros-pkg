@@ -1,5 +1,5 @@
 # current location and data on piece
-chess_piece start
+ChessPiece start
 # location to move piece to
 geometry_msgs/PoseStamped end
 ---
