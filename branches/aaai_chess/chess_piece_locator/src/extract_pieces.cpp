@@ -191,7 +191,8 @@ pcl_ros::PieceExtraction::input_indices_callback (
     indices_ptr = boost::make_shared <std::vector<int> > (indices->indices);
 
   PointCloud cloud_transformed;
-  if (!pcl_ros::transformPointCloud (std::string("torso_link"), *cloud, cloud_transformed, tf_listener_))
+  tf_listener_.waitForTransform(std::string("chess_board"), cloud->header.frame_id, cloud->header.stamp, ros::Duration(3.0));
+  if (!pcl_ros::transformPointCloud (std::string("chess_board"), *cloud, cloud_transformed, tf_listener_))
   {
       //NODELET_ERROR ("[%s::computePublish] Error converting output dataset from %s to %s.", getName ().c_str (), output.header.frame_id.c_str (), tf_output_frame_.c_str ());
       //return;
@@ -247,8 +248,6 @@ pcl_ros::PieceExtraction::input_indices_callback (
             cb.pieces[j].pose.position.x = (cb.pieces[j].pose.position.x + p.pose.position.x)/2;
             cb.pieces[j].pose.position.y = (cb.pieces[j].pose.position.y + p.pose.position.y)/2;
             cb.pieces[j].pose.position.z = (cb.pieces[j].pose.position.z + p.pose.position.z)/2;  
-            cb.pieces[j].pts += p.pts;
-            cb.pieces[j].color = (cb.pieces[j].color + p.color)/2;
             new_ = false;
             break;
         }
