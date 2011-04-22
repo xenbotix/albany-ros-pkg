@@ -53,20 +53,24 @@ class CameraTurnpike
      */ 
     bool service_callback ( std_srvs::Empty::Request& request, std_srvs::Empty::Response& response )
     {
-        rgb_pub_.publish(rgb_);
-        depth_pub_.publish(depth_);
+        if(depth_){
+            rgb_pub_.publish(rgb_);
+            depth_pub_.publish(depth_);
+        }else{
+            ROS_WARN("No image/cloud received, skipping re-publish");
+        }
         return true;
     }
 
   private: 
-    sensor_msgs::Image          rgb_;
-    ros::Subscriber             rgb_sub_; 
-    ros::Publisher              rgb_pub_;
+    sensor_msgs::Image                  rgb_;
+    ros::Subscriber                     rgb_sub_; 
+    ros::Publisher                      rgb_pub_;
     sensor_msgs::PointCloud2ConstPtr    depth_;
-    ros::Subscriber             depth_sub_; 
-    ros::Publisher              depth_pub_;
-    ros::NodeHandle             n_;
-    ros::ServiceServer          service_;
+    ros::Subscriber                     depth_sub_; 
+    ros::Publisher                      depth_pub_;
+    ros::NodeHandle                     n_;
+    ros::ServiceServer                  service_;
 };
 
 int main (int argc, char **argv)
