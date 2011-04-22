@@ -16,6 +16,7 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <image_transport/image_transport.h>
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -33,6 +34,9 @@
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
+
+#include <dynamic_reconfigure/server.h>
+#include <chess_board_locator/LocatorConfig.h>
 
 using namespace std;
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> CameraSyncPolicy;
@@ -85,12 +89,16 @@ tf::Transform tfFromEigen(Eigen::Matrix4f trans)
 class ChessBoardLocator
 {
   public:
+    typedef chess_board_locator::LocatorConfig Config;
+    typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+
     ChessBoardLocator(ros::NodeHandle & n): nh_ (n),
         image_sub_ (nh_, "/camera/rgb/image_color", 3),
         cloud_sub_(nh_, "/camera/rgb/points", 3),
         sync_(CameraSyncPolicy(10), image_sub_, cloud_sub_),
         msgs_(0),   
-        debug_(false)
+        channel_(0),
+        output_image_(false)
     {
         ros::NodeHandle nh ("~");
         // load parameters for hough transform
@@ -104,11 +112,15 @@ class ChessBoardLocator
             h_min_length_ = 100;
         ROS_INFO ("Hough Min Length: %d", h_min_length_);    
 
-        // create a window to display results in
-        if (debug_) cv::namedWindow("chess_board_locator");
-        pub_ = nh.advertise< pcl::PointCloud<point> >("points", 10);
+        // publisher for image output
+        image_transport::ImageTransport it(nh);
+        pub_ = it.advertise("image",1);
 
         sync_.registerCallback(boost::bind(&ChessBoardLocator::cameraCallback, this, _1, _2));
+
+        // initialize dynamic reconfigure
+        reconfigure_server_.reset (new ReconfigureServer (reconfigure_mutex_, nh));
+        reconfigure_server_->setCallback (boost::bind (&ChessBoardLocator::configCallback, this, _1, _2));
     }
 
     /* 
@@ -140,7 +152,7 @@ class ChessBoardLocator
             char* Ii = src.ptr<char>(i);
             for(int j = 0; j < bridge_->image.cols; j++)
             {   
-                Ii[j] = Di[j*3];
+                Ii[j+channel_] = Di[j*3+channel_];
             }   
         }
  
@@ -171,7 +183,7 @@ class ChessBoardLocator
         }
 
         // output lines to screen
-        if(debug_)
+        if(output_image_)
         {
             // convert back to color
             cv::cvtColor(dst, cdst, CV_GRAY2BGR);
@@ -215,7 +227,7 @@ class ChessBoardLocator
                     }
                     if(include)
                         data.push_back( point(cp.x,cp.y,cp.z) );
-                    if(debug_)
+                    if(output_image_)
                     {
                         cv::circle( cdst, p, 5, cv::Scalar(255,0,0), -1 );
                     }
@@ -301,19 +313,21 @@ class ChessBoardLocator
         br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), depth->header.frame_id, "chess_board"));
         ROS_INFO("published %d", msgs_++);
 
-        if(debug_){
-            // publish the cloud
-            pcl::PointCloud<point> data_transformed;
-            data_transformed.header.frame_id  = depth->header.frame_id;
-            data_transformed.header.stamp  = depth->header.stamp;
-            pcl::transformPointCloud( data, data_transformed, best_transform);
-            pub_.publish(data_transformed);
-            // show the image
-            cv::imshow("chess_board_locator", cdst);
-            cv::imwrite("image.png", cdst);
-            cv::waitKey(3);
+        if(output_image_){
+            bridge_->image = cdst;
+            pub_.publish( bridge_->toImageMsg() );
         }
     }
+
+    void configCallback (Config &config, uint32_t level)
+    {
+        h_rho_ = config.h_rho;
+        h_threshold_ = config.h_threshold;
+        h_min_length_ = config.h_min_length;
+        channel_ = config.channel;
+        output_image_ = config.output_image;
+    }
+
 
   private: 
     /* node handles, subscribers, publishers, etc */
@@ -321,16 +335,21 @@ class ChessBoardLocator
     message_filters::Subscriber<sensor_msgs::Image> image_sub_; 
     message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub_;
     message_filters::Synchronizer<CameraSyncPolicy> sync_;
-    ros::Publisher pub_;
+    image_transport::Publisher pub_;
     tf::TransformBroadcaster br_;
     cv_bridge::CvImagePtr bridge_;
+
+    /* reconfigure server*/
+    boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+    boost::recursive_mutex reconfigure_mutex_;
 
     /* parameters for hough line detection */
     int h_rho_;
     int h_threshold_;
     int h_min_length_;
     int msgs_;
-    bool debug_;
+    int channel_;
+    bool output_image_;
 };
 
 int main (int argc, char **argv)

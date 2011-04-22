@@ -11,6 +11,8 @@
   <depend package="sensor_msgs"/>
   <depend package="tf"/>
   <depend package="message_filters"/>
+  <depend package="dynamic_reconfigure"/>
+  <depend package="image_transport"/>
 </package>
 
 
