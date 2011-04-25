@@ -17,7 +17,7 @@ class CourierServer:
         rospy.on_shutdown(self.cleanup)
 
         # setup tf for translating poses
-        self._listener = tf.TransformListener()
+        self.listener = tf.TransformListener()
         rospy.sleep(2)
 
         # subscribe to button
@@ -162,7 +162,7 @@ class CourierServer:
 
     def waitForButton(self):
         """ Wait until button pressed. """
-        while self.buttonValue == 1:
+        while self.buttonValue == 255:
             pass
         
     def buttonCb(self, msg):

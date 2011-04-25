@@ -1,7 +1,7 @@
 <launch>
     
   <include file="$(find rosalyn)/launch/bringup-ROSalyn.launch" />
-  <include file="$(find locator)/launch/ils-locator.launch" />
+  <include file="$(find locator)/launch/ils_locator.launch" />
 
   <node name="courier_node" pkg="office_courier" type="CourierNode.py" >
     <remap from="cmd_vel" to="desired_vel"/>
