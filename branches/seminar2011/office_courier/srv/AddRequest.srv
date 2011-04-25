@@ -1,0 +1,4 @@
+string PickupLocation
+string DropoffLocation
+---
+int16 WaitTime
