@@ -184,20 +184,17 @@ pcl_ros::PieceExtraction::input_indices_callback (
                    indices->indices.size (), indices->header.stamp.toSec (), indices->header.frame_id.c_str (), pnh_->resolveName ("indices").c_str ());
   else
     NODELET_DEBUG ("[%s::input_callback] PointCloud with %d data points, stamp %f, and frame %s on topic %s received.", getName ().c_str (), cloud->width * cloud->height, cloud->header.stamp.toSec (), cloud->header.frame_id.c_str (), pnh_->resolveName ("input").c_str ());
-  ///
 
   IndicesConstPtr indices_ptr;
   if (indices)
     indices_ptr = boost::make_shared <std::vector<int> > (indices->indices);
 
   PointCloud cloud_transformed;
-  tf_listener_.waitForTransform(std::string("chess_board"), cloud->header.frame_id, cloud->header.stamp, ros::Duration(3.0));
   if (!pcl_ros::transformPointCloud (std::string("chess_board"), *cloud, cloud_transformed, tf_listener_))
   {
-      //NODELET_ERROR ("[%s::computePublish] Error converting output dataset from %s to %s.", getName ().c_str (), output.header.frame_id.c_str (), tf_output_frame_.c_str ());
-      //return;
+    NODELET_ERROR ("[%s::computePublish] Error converting output dataset from to chess_board", getName().c_str () );
+    return;
   }
-  //cloud.reset (new PointCloud2 (cloud_transformed));
 
   impl_.setInputCloud (cloud_transformed.makeShared());
   impl_.setIndices (indices_ptr);
@@ -253,25 +250,13 @@ pcl_ros::PieceExtraction::input_indices_callback (
         }
     }  
     
-    // add cluster
-    if (new_)
+    // add cluster if not overlapping with another
+    if (new_){
+        // TODO: add check for outside board, or too large to be a chess piece
         cb.pieces.push_back(p);
-
-    //NODELET_DEBUG ("[segmentAndPublish] Published cluster %zu (with %zu values and stamp %f) on topic %s",
-    //               i, clusters[i].indices.size (), output.header.stamp.toSec (), pnh_->resolveName ("output").c_str ());
+    }
 
   }
-  /*PointCloud cl;
-  cl.header.frame_id = cb.pieces[0].header.frame_id;
-  cl.header.stamp = cloud->header.stamp;
-  for(size_t i = 0; i < cb.pieces.size(); i++){
-    pcl::PointXYZRGB p;
-    p.x = cb.pieces[i].pose.position.x;
-    p.y = cb.pieces[i].pose.position.y;
-    p.z = cb.pieces[i].pose.position.z;
-    cl.push_back(p);
-  }
-  pub_output_.publish(cl);*/
   pub_output_.publish(cb);
 }
 

@@ -80,7 +80,6 @@
     <remap from="~input"       to="/camera_turnpike/points" />
     <remap from="~indices"     to="/extract_objects_table/output" />
     <rosparam>
-      output_frame: torso_link
       negative: false
     </rosparam>
   </node>
