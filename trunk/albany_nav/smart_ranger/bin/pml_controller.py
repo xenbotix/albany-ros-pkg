@@ -4,7 +4,7 @@ import roslib; roslib.load_manifest('smart_ranger')
 import rospy
 
 from geometry_msgs.msg import Twist
-from arbotix.msg import ScanParameters
+from arbotix_msgs.msg import ScanParameters
 
 # modes of operation
 TELEPRESENCE = 0
