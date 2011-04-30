@@ -21,8 +21,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <limits>
 
-//typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> CameraSyncPolicy;
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> CameraSyncPolicy;
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> CameraSyncPolicy;
 
 static const char WINDOW[] = "Image Window";
 using namespace std;
@@ -75,7 +74,7 @@ void doSegmentation(cv_bridge::CvImagePtr depth, vector<PointInfo> &segments)
 
         if(!std::isnan(currentPointDistance) && !std::isinf(currentPointDistance))
 		{
-		    if(fabs(previousPointDistance - currentPointDistance) > .03)
+		    if(fabs(previousPointDistance - currentPointDistance) > .15)
 			{
                 // TODO: deal with nan's better (they are probably jump conditions) 
 				PointInfo previousPointInfo;
@@ -200,14 +199,13 @@ PointInfo * findClosestSegment(vector<PointInfo> segments)
  * data from the associated point cloud.
  */
 void depthCb( const sensor_msgs::ImageConstPtr& image,
-              const sensor_msgs::ImageConstPtr& rgb) 
-//              const sensor_msgs::PointCloud2ConstPtr& points )
+              const sensor_msgs::PointCloud2ConstPtr& points )
 {
+  ROS_INFO("Callback triggered on depth image");
+
   cv_bridge::CvImagePtr depth;
-  cv_bridge::CvImagePtr color; 
   try
   {
-    color = cv_bridge::toCvCopy( rgb, "rgb8");
     depth = cv_bridge::toCvCopy( image, "32FC1");
   }
   catch (cv_bridge::Exception& e)
@@ -222,20 +220,42 @@ void depthCb( const sensor_msgs::ImageConstPtr& image,
   
   // create visual representation of segments
   // added 4/30 (MEF)
-  /*cv::Mat img(depth->image.rows, depth->image.cols, CV_8UC1);
-  for ( int i = 0; i < img.rows; i++ )
+  cv::Mat img(depth->image.rows, depth->image.cols, CV_8UC3);
+  for(int i = 0; i < depth->image.rows; i++)
   {
-    for ( int j = 0; j < img.cols; j++ ){
-      img.at<char>( i, j ) = 0;
-    }
-  }*/
-  for ( int i = 0; i < segments.size(); i++ )
-  {
-    PointInfo p = segments[i];
-    //img.at<char>( p.row, p.col ) = 255;
-    cv::circle(color->image, cv::Point(p.col, p.row), 2, cvScalar(0,255,0));
+      float* Di = depth->image.ptr<float>(i);
+      char* Ii = img.ptr<char>(i);
+      for(int j = 0; j < depth->image.cols; j++)
+      {   
+          Ii[j*3] = (char) (255*((Di[j]-0.5)/5.0));
+          Ii[j*3+1] = (char) (255*((Di[j]-0.5)/5.0));
+          Ii[j*3+2] = (char) (255*((Di[j]-0.5)/5.0));
+      }   
   }
-  cv::imwrite( "depthImagewithpoints.jpg", color->image); //img); 
+  // walk along segment
+  for ( int i = 0; i < segments.size(); i+=2 )
+  {
+    PointInfo segmentStart = segments[i];
+    PointInfo segmentEnd = segments[i+1];  
+
+    float depth_buffer = .2;
+    for ( int col = segmentStart.col; col <= segmentEnd.col; ++col ) // iterate through every column in segment
+    {
+        int row = segmentStart.row;
+        float prev = depth->image.at<float>( row, col );
+        while( fabs(depth->image.at<float>( row - 1, col ) - prev) < depth_buffer && row >= 0){
+          cv::circle(img, cv::Point(col, row), 2, cvScalar(255,0,0));
+          prev = depth->image.at<float>( --row, col );
+        }
+        if ( row >= 0 )
+        {
+          cv::circle(img, cv::Point(col, row), 2, cvScalar(255,0,0));
+        }
+    }	
+    cv::circle(img, cv::Point(segmentStart.col, segmentStart.row), 2, cvScalar(0,255,0));
+    cv::circle(img, cv::Point(segmentEnd.col, segmentEnd.row), 2, cvScalar(0,0,255));
+  }
+  cv::imwrite( "depthImagewithpoints.jpg", img); 
   return;
 
 
@@ -273,9 +293,8 @@ int main( int argc, char* argv[] )
 
   // subscribe to the /camera/depth/image and /camera/depth/points
   message_filters::Subscriber<sensor_msgs::Image> depth_sub( n, "camera/depth/image", 3);
-  message_filters::Subscriber<sensor_msgs::Image> rgb_sub( n, "camera/rgb/image_color", 3); 
-  //message_filters::Subscriber<sensor_msgs::PointCloud2> points_sub( n, "camera/depth/points", 3);
-  message_filters::Synchronizer<CameraSyncPolicy> sync(CameraSyncPolicy(10), depth_sub, rgb_sub); //points_sub);
+  message_filters::Subscriber<sensor_msgs::PointCloud2> points_sub( n, "camera/depth/points", 3);
+  message_filters::Synchronizer<CameraSyncPolicy> sync(CameraSyncPolicy(10), depth_sub, points_sub);
 
   //made cv named window here
   if(0){
