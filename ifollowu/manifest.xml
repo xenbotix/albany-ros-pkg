@@ -1,14 +1,17 @@
 <package>
   <description brief="ifollowu">
-
      ifollowu
-
   </description>
-  <author>Michael Ferguson</author>
+  <author>Stu Odell, Ramon Rahman, Michael Ferguson</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/ifollowu</url>
-
+  <depend package="sensor_msgs"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="image_transport"/>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
 </package>
 
 
