@@ -222,17 +222,27 @@ bool findCentroidClosestSegment(const sensor_msgs::PointCloud2ConstPtr & points,
     PointInfo start = segments[i];
     PointInfo end = segments[i+1];
 
-    ROS_INFO("(%d, %d) to (%d, %d)", start.row, start.col, end.row, end.col);
-    if ( !std::isnan(start.distance) && !std::isnan(end.distance) )
-    {
-        pcl::PointXYZ s = cloud(start.row, start.col);
-        pcl::PointXYZ e = cloud(end.row, end.col);
-    
-    //if ( !std::isnan(s.x) && !std::isnan(s.y) && !std::isnan(s.z) &&
-    //     !std::isnan(e.x) && !std::isnan(e.y) && !std::isnan(e.z) )
-    //{
-        pcl::PointXYZ p =  pcl::PointXYZ( (s.x+e.x)/2.0, (s.y+e.y)/2.0, (s.z+e.z)/2.0);
+    pcl::PointXYZ p =  pcl::PointXYZ( 0, 0, 0);
+    int n = 0;
 
+    ROS_INFO("(%d, %d) to (%d, %d)", start.row, start.col, end.row, end.col);
+    for( int col = start.col; col < end.col; col++ )
+    {
+        pcl::PointXYZ k = cloud(col, start.row);
+        if ( !std::isnan(k.x) && !std::isnan(k.y) && !std::isnan(k.z)) 
+        {
+            p.x += k.x;
+            p.y += k.y;
+            p.z += k.z;
+            n++;
+        }
+    }
+
+    if( n )
+    {
+        p.x /= n;
+        p.y /= n;
+        p.z /= n;
         float d = pcl::squaredEuclideanDistance<pcl::PointXYZ,pcl::PointXYZ>( p, pcl::PointXYZ(0,0,0) );
         ROS_INFO("d = %f", d);
         if( d < dist )
