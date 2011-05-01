@@ -17,6 +17,10 @@
 
 #include <geometry_msgs/Point.h>
 
+#include <pcl/io/io.h>
+#include <pcl/point_types.h>
+#include <pcl_ros/point_cloud.h>
+
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/synchronizer.h>
@@ -29,6 +33,7 @@ static const char WINDOW[] = "Image Window";
 using namespace std;
 
 ros::Publisher person_pub;
+int skip;
 
 //Struct needed to start the segment being and end information in the vector.
 struct PointInfo
@@ -103,8 +108,8 @@ void doSegmentation(cv_bridge::CvImagePtr depth, vector<PointInfo> &segments)
     //we are storing the final vector info, where the last segment is stored.
     PointInfo finalPointInfo;
     finalPointInfo.row = row;
-    finalPointInfo.col = depth->image.cols;
-    finalPointInfo.distance = depth->image.at<float>(row,depth->image.cols);
+    finalPointInfo.col = depth->image.cols-2;
+    finalPointInfo.distance = depth->image.at<float>(row,depth->image.cols-1);
     segments.push_back(finalPointInfo);
 }
 
@@ -144,7 +149,7 @@ bool isHuman(cv_bridge::CvImagePtr depthImage, PointInfo segmentStart, PointInfo
  
   cv::Mat img(depthImage->image.rows, depthImage->image.cols, CV_8UC1);
   ROS_INFO( "checkpoint beta" );
-  for ( int i = 0; i < points.size(); i++ )
+  for ( size_t i = 0; i < points.size(); i++ )
     img.at<float>( points.at( i ).row, points.at( i ).col ) = 200;
   //img.at<float>( segmentStart.row, segmentStart.col ) = 225;
   //img.at<float>( segmentEnd.row, segmentEnd.col ) = 225;
@@ -197,6 +202,51 @@ PointInfo * findClosestSegment(vector<PointInfo> segments)
   return closestPoints;
 }
 
+/**
+ * This is to find the 2 closest segments. This is for the implementation that assumes
+ * that the person will be closest thing.
+ * 
+ * Author: Ramon Rahman
+ */
+bool findCentroidClosestSegment(const sensor_msgs::PointCloud2ConstPtr & points, vector<PointInfo> segments, pcl::PointXYZ & centroid)
+{ 
+  // convert cloud from sensor message
+  pcl::PointCloud<pcl::PointXYZ> cloud;
+  pcl::fromROSMsg(*points, cloud);
+  
+  float dist = 9999.999;
+  ROS_INFO("%d", (int) cloud.size());
+
+  for(unsigned int i = 0; i < segments.size(); i += 2)
+  {
+    PointInfo start = segments[i];
+    PointInfo end = segments[i+1];
+
+    ROS_INFO("(%d, %d) to (%d, %d)", start.row, start.col, end.row, end.col);
+    if ( !std::isnan(start.distance) && !std::isnan(end.distance) )
+    {
+        pcl::PointXYZ s = cloud(start.row, start.col);
+        pcl::PointXYZ e = cloud(end.row, end.col);
+    
+    //if ( !std::isnan(s.x) && !std::isnan(s.y) && !std::isnan(s.z) &&
+    //     !std::isnan(e.x) && !std::isnan(e.y) && !std::isnan(e.z) )
+    //{
+        pcl::PointXYZ p =  pcl::PointXYZ( (s.x+e.x)/2.0, (s.y+e.y)/2.0, (s.z+e.z)/2.0);
+
+        float d = pcl::squaredEuclideanDistance<pcl::PointXYZ,pcl::PointXYZ>( p, pcl::PointXYZ(0,0,0) );
+        ROS_INFO("d = %f", d);
+        if( d < dist )
+        {
+            dist = d;
+            centroid.x = p.x;
+            centroid.y = p.y;
+            centroid.z = p.z;
+        }
+    }
+  }
+  return true;
+}
+
 
 /**
  * This callback processes a depth image to find people, using some additional
@@ -205,6 +255,9 @@ PointInfo * findClosestSegment(vector<PointInfo> segments)
 void depthCb( const sensor_msgs::ImageConstPtr& image,
               const sensor_msgs::PointCloud2ConstPtr& points )
 {
+  if( (skip++%15) != 0 )
+    return;
+
   ROS_INFO("Callback triggered on depth image");
 
   cv_bridge::CvImagePtr depth;
@@ -222,6 +275,7 @@ void depthCb( const sensor_msgs::ImageConstPtr& image,
   vector<PointInfo> segments;
   doSegmentation(depth, segments);
   
+  ROS_INFO("Found %d segments", (int) segments.size()/2);
   // create visual representation of segments
   // added 4/30 (MEF)
   cv::Mat img(depth->image.rows, depth->image.cols, CV_8UC3);
@@ -237,7 +291,7 @@ void depthCb( const sensor_msgs::ImageConstPtr& image,
       }   
   }
   // walk along segment
-  for ( int i = 0; i < segments.size(); i+=2 )
+  for ( size_t i = 0; i < segments.size(); i+=2 )
   {
     PointInfo segmentStart = segments[i];
     PointInfo segmentEnd = segments[i+1];  
@@ -257,47 +311,29 @@ void depthCb( const sensor_msgs::ImageConstPtr& image,
         }
     }	
     cv::circle(img, cv::Point(segmentStart.col, segmentStart.row), 2, cvScalar(0,255,0));
-    cv::circle(img, cv::Point(segmentEnd.col, segmentEnd.row), 2, cvScalar(0,0,255));
+    cv::circle(img, cv::Point(segmentEnd.col, segmentEnd.row), 2, cvScalar(0,255,0));
   }
   cv::imwrite( "depthImagewithpoints.jpg", img);
 
   // find closest centroid
-  
- 
-  return;
-
-
-
-
-
-  int count = 1;
-  for(unsigned int i = 0; i < segments.size(); i += 2)
-  {
-     //printf("i: %d\n", i);
-     PointInfo start = segments[i];
-     PointInfo end = segments[i+1];
-     printf("segment %d\n----------\n start: (%d, %d) at distance %f(m)\n end: (%d, %d) at distance: %f(m)\n\n",
-	      count, start.row, start.col, start.distance, end.row, end.col, end.distance);
-     count++;
-
-    //TODO: Hey Stu start here, if you wanna read what else I did just refer to comments here, but this is the
-    //beginning of human shape detection per segment. Let me know if you have any questions. Thanks.
-    //the top part is how to go about printing and seeing the segments. So now, we can send the two segments,
-    //and the rgb image and analyze between those two segments
-    //lets call the function we will call, isHuman, we'll see if our segment represents a human.
-    //if(isHuman(depth, start, end))
-	//printf("success, found a human!\n");
-    //    printf(" ");
-  }
+  pcl::PointXYZ centroid = pcl::PointXYZ( 0, 0, 0.8 );
+  findCentroidClosestSegment( points, segments, centroid );
+    
+  // publish output
+  geometry_msgs::Point msg = geometry_msgs::Point();
+  msg.x = centroid.x;
+  msg.y = centroid.y;
+  msg.z = centroid.z;
+  person_pub.publish(msg);
 }
-
-
 
 
 int main( int argc, char* argv[] )
 {
   ros::init( argc, argv, "person_identifier" );
   ros::NodeHandle n;
+
+  skip = 0;
 
   // subscribe to the /camera/depth/image and /camera/depth/points
   message_filters::Subscriber<sensor_msgs::Image> depth_sub( n, "camera/depth/image", 3);
