@@ -15,6 +15,8 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 
+#include <geometry_msgs/Point.h>
+
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/synchronizer.h>
@@ -25,6 +27,8 @@ typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sens
 
 static const char WINDOW[] = "Image Window";
 using namespace std;
+
+ros::Publisher person_pub;
 
 //Struct needed to start the segment being and end information in the vector.
 struct PointInfo
@@ -255,7 +259,11 @@ void depthCb( const sensor_msgs::ImageConstPtr& image,
     cv::circle(img, cv::Point(segmentStart.col, segmentStart.row), 2, cvScalar(0,255,0));
     cv::circle(img, cv::Point(segmentEnd.col, segmentEnd.row), 2, cvScalar(0,0,255));
   }
-  cv::imwrite( "depthImagewithpoints.jpg", img); 
+  cv::imwrite( "depthImagewithpoints.jpg", img);
+
+  // find closest centroid
+  
+ 
   return;
 
 
@@ -296,7 +304,10 @@ int main( int argc, char* argv[] )
   message_filters::Subscriber<sensor_msgs::PointCloud2> points_sub( n, "camera/depth/points", 3);
   message_filters::Synchronizer<CameraSyncPolicy> sync(CameraSyncPolicy(10), depth_sub, points_sub);
 
-  //made cv named window here
+  // publisher
+  person_pub = n.advertise<geometry_msgs::Point>("person_location", 10);
+
+  // made cv named window here
   if(0){
     cv::namedWindow(WINDOW);
   }
