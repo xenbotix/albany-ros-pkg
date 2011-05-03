@@ -26,8 +26,16 @@ def callback(msg):
         This function is called when the node shuts down -- it stops the robot. """
     global p
     twist = Twist()
-    twist.linear.x = (msg.z - 1.0)*2.0;
-    twist.angular.z = - msg.x * 7.0;
+    twist.linear.x = (msg.z - 1.0)*1.1;
+    twist.angular.z = - msg.x * 1.5;
+    if twist.linear.x > 0.3:
+        twist.linear.x = 0.3
+    elif twist.linear.x < -0.3:
+        twist.linear.x = -0.3
+    if twist.angular.z > 1.0:
+        twist.angular.z = 1.0
+    elif twist.angular.z < -1.0:
+        twist.angular.z = -1.0
     print twist.linear.x, twist.angular.z
     p.publish(twist)
 
