@@ -83,21 +83,15 @@ void doSegmentation(cv_bridge::CvImagePtr depth, vector<PointInfo> &segments)
 
         if(!std::isnan(currentPointDistance) && !std::isinf(currentPointDistance))
 		{
-		    if(fabs(previousPointDistance - currentPointDistance) > .15)
+		    if(fabs(previousPointDistance - currentPointDistance) > .04)
 			{
                 // TODO: deal with nan's better (they are probably jump conditions) 
-				PointInfo previousPointInfo;
-				previousPointInfo.row = row;
-				previousPointInfo.col = col -1;
-				previousPointInfo.distance = previousPointDistance;
+				PointInfo previousPointInfo( row, col -1, previousPointDistance );
 				//store the last point in the next slot, so we can
 				//say where the last object similar distance away ends.
 				segments.push_back(previousPointInfo);
-	
-				PointInfo currentPointInfo;
-				currentPointInfo.row = row;
-				currentPointInfo.col = col;
-				currentPointInfo.distance = currentPointDistance;
+
+				PointInfo currentPointInfo( row, col, currentPointDistance );
 				//store the current beginning of a new segment
 				segments.push_back(currentPointInfo);
 			}
@@ -106,10 +100,10 @@ void doSegmentation(cv_bridge::CvImagePtr depth, vector<PointInfo> &segments)
     }
 
     //we are storing the final vector info, where the last segment is stored.
-    PointInfo finalPointInfo;
-    finalPointInfo.row = row;
-    finalPointInfo.col = depth->image.cols-2;
-    finalPointInfo.distance = depth->image.at<float>(row,depth->image.cols-1);
+    PointInfo finalPointInfo( row, depth->image.cols-2, depth->image.at<float>( row, depth->image.cols - 2 ) );
+    //finalPointInfo.row = row;
+    //finalPointInfo.col = depth->image.cols-2;
+    //finalPointInfo.distance = depth->image.at<float>(row,depth->image.cols-1);
     segments.push_back(finalPointInfo);
 }
 
@@ -126,48 +120,28 @@ void doSegmentation(cv_bridge::CvImagePtr depth, vector<PointInfo> &segments)
  * to start at the bottom for all the columns accross.
  *
  */
-bool isHuman(cv_bridge::CvImagePtr depthImage, PointInfo segmentStart, PointInfo segmentEnd)
+bool heightCheck(pcl::PointCloud<pcl::PointXYZ> &cloud, PointInfo segmentStart, PointInfo segmentEnd)
 {
-  vector<PointInfo> points;
-  float depth_buffer = .03; // about 3 centimeters
-  float prev;
-  // REMEMBER!!! cvimages are in stupid row-major order because it sucks
-  ROS_INFO( "checkpoint alpha" );
-  for ( int row, col = segmentStart.col; col <= segmentEnd.col; ++col ) // itorate through every column in segment
+  float width = fabs( cloud( segmentEnd.col, segmentEnd.row ).x - cloud( segmentStart.col, segmentStart.row ).x );
+  if ( width > .3 && width < .7 )
   {
-    row = segmentStart.row; // set row to the row of the segment
-    prev = depthImage->image.at<float>( row, col ); // use the first pixel in column for depth reference
-    while( depthImage->image.at<float>( row - 1, col ) - prev < depth_buffer && row >= 0)
-      --row;
-    if ( row >= 0 )
+    float highestPoint = 0; // will be negative becouse y is inverted
+    float depth_buffer = .03; // about 3 centimeters
+    pcl::PointXYZ prev_point, next_point;
+    for ( int row = segmentStart.row, col = segmentStart.col; col <= segmentEnd.col; ++col ) // itorate through every column
     {
-      points.push_back( PointInfo( row, col, 0 ) );
-      ROS_INFO( "point found at %d, %d", points.back().col, points.back().row );
+      row = segmentStart.row; // set row to the row of the segment
+      while( fabs( cloud( col, row - 1 ).z - cloud( col, row ).z ) < depth_buffer && row > 1 )
+        --row;
+      if ( highestPoint > cloud( col, row ).y )
+        highestPoint = cloud( col, row ).y;
+      //ROS_INFO( "y = %.2f", cloud( col, row ).y );
     }
-  }	
-  ROS_INFO( "%d side points found!", (int) points.size() );
- 
-  cv::Mat img(depthImage->image.rows, depthImage->image.cols, CV_8UC1);
-  ROS_INFO( "checkpoint beta" );
-  for ( size_t i = 0; i < points.size(); i++ )
-    img.at<float>( points.at( i ).row, points.at( i ).col ) = 200;
-  //img.at<float>( segmentStart.row, segmentStart.col ) = 225;
-  //img.at<float>( segmentEnd.row, segmentEnd.col ) = 225;
-  // draws a white bar across the center for testing purposes
-  //for ( int i = 0; i < img.cols; i++ )
-    //img.at<float>( 100, i ) = 225;
-
-  /*for(size_t j = 0; j< points.size(); j++){
-    PointInfo i = points[j];
-    img.at<char>( i.col, i.row ) = numeric_limits<float>::max();
-  }*/
-  cv::imwrite( "depthImagewithpoints.jpg", img); //depthImage->image );
-  ROS_INFO( "checkpoint charlie" );
-  //string name = sprintf( "depthImage%d.jpg", segmentStart.col);
-  //cv::imwrite( name, img);
-  //cv::waitKey(3);
-  //ROS_INFO( "done" );
-  return true;
+    //ROS_INFO( "highestPoint = %d" , highestPoint);
+    return ( highestPoint > -.8 && highestPoint < -.3 );
+  }
+  else
+    return false;
 }
 
 
@@ -209,50 +183,54 @@ PointInfo * findClosestSegment(vector<PointInfo> segments)
  * Author: Ramon Rahman
  */
 bool findCentroidClosestSegment(const sensor_msgs::PointCloud2ConstPtr & points, vector<PointInfo> segments, pcl::PointXYZ & centroid)
-{ 
+{
   // convert cloud from sensor message
   pcl::PointCloud<pcl::PointXYZ> cloud;
   pcl::fromROSMsg(*points, cloud);
-  
+
   float dist = 9999.999;
-  ROS_INFO("%d", (int) cloud.size());
+  //ROS_INFO("%d", (int) cloud.size());
 
   for(unsigned int i = 0; i < segments.size(); i += 2)
   {
     PointInfo start = segments[i];
     PointInfo end = segments[i+1];
 
-    pcl::PointXYZ p =  pcl::PointXYZ( 0, 0, 0);
-    int n = 0;
-
-    ROS_INFO("(%d, %d) to (%d, %d)", start.row, start.col, end.row, end.col);
-    for( int col = start.col; col < end.col; col++ )
+    if ( heightCheck( cloud, start, end ) )///////////////////////
     {
-        pcl::PointXYZ k = cloud(col, start.row);
-        if ( !std::isnan(k.x) && !std::isnan(k.y) && !std::isnan(k.z)) 
-        {
-            p.x += k.x;
-            p.y += k.y;
-            p.z += k.z;
-            n++;
-        }
-    }
+      ROS_INFO( "HUMAN DETECTED!!!!111!!1!!11!!1111111212321" );
+      pcl::PointXYZ p =  pcl::PointXYZ( 0, 0, 0);
+      int n = 0;
 
-    if( n )
-    {
-        p.x /= n;
-        p.y /= n;
-        p.z /= n;
-        float d = pcl::squaredEuclideanDistance<pcl::PointXYZ,pcl::PointXYZ>( p, pcl::PointXYZ(0,0,0) );
-        ROS_INFO("d = %f", d);
-        if( d < dist )
-        {
-            dist = d;
-            centroid.x = p.x;
-            centroid.y = p.y;
-            centroid.z = p.z;
-        }
-    }
+      //ROS_INFO("(%d, %d) to (%d, %d)", start.row, start.col, end.row, end.col);
+      for( int col = start.col; col < end.col; col++ )
+      {
+          pcl::PointXYZ k = cloud(col, start.row);
+          if ( !std::isnan(k.x) && !std::isnan(k.y) && !std::isnan(k.z))
+          {
+              p.x += k.x;
+              p.y += k.y;
+              p.z += k.z;
+              n++;
+          }
+      }
+  
+      if( n )
+      {
+          p.x /= n;
+          p.y /= n;
+          p.z /= n;
+          float d = pcl::squaredEuclideanDistance<pcl::PointXYZ,pcl::PointXYZ>( p, pcl::PointXYZ(0,0,0) );
+          ROS_INFO("d = %f", d);
+          if( d < dist )
+          {
+              dist = d;
+              centroid.x = p.x;
+              centroid.y = p.y;
+              centroid.z = p.z;
+          }
+      }
+    } // end if
   }
   return true;
 }
@@ -265,10 +243,10 @@ bool findCentroidClosestSegment(const sensor_msgs::PointCloud2ConstPtr & points,
 void depthCb( const sensor_msgs::ImageConstPtr& image,
               const sensor_msgs::PointCloud2ConstPtr& points )
 {
-  if( (skip++%15) != 0 )
-    return;
+  //if( (skip++%5) != 0 )
+    //return;
 
-  ROS_INFO("Callback triggered on depth image");
+  //ROS_INFO("Callback triggered on depth image");
 
   cv_bridge::CvImagePtr depth;
   try
@@ -300,7 +278,7 @@ void depthCb( const sensor_msgs::ImageConstPtr& image,
           Ii[j*3+2] = (char) (255*((Di[j]-0.5)/5.0));
       }   
   }
-  // walk along segment
+  /* walk along segment
   for ( size_t i = 0; i < segments.size(); i+=2 )
   {
     PointInfo segmentStart = segments[i];
@@ -323,8 +301,8 @@ void depthCb( const sensor_msgs::ImageConstPtr& image,
     cv::circle(img, cv::Point(segmentStart.col, segmentStart.row), 2, cvScalar(0,255,0));
     cv::circle(img, cv::Point(segmentEnd.col, segmentEnd.row), 2, cvScalar(0,255,0));
   }
-  cv::imwrite( "depthImagewithpoints.jpg", img);
-
+  //cv::imwrite( "depthImagewithpoints.jpg", img);
+  */
   // find closest centroid
   pcl::PointXYZ centroid = pcl::PointXYZ( 0, 0, 0.8 );
   findCentroidClosestSegment( points, segments, centroid );
