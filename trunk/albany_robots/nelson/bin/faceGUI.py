@@ -17,6 +17,7 @@ from pygame import *
 botBody = (0,105,30)
 botSide = (0,125,40)
 black = (0,0,0)
+white = (255,255,255)
 yellow = (255,255,0)
 red = (255,0,0)
 muted = (110, 110, 0)
@@ -27,9 +28,9 @@ class virtualFace:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((600,500))    
-        self.eyecolor = black
+        self.eyecolor = yellow
         self.joints = {"head_pan_joint":0.0, "head_tilt_joint":0.0, "eye_tilt":0.0, "r_eye_pan":0.0, "l_eye_pan":0.0, 
-                       "eyelids":0.0, "top_lip":0.0, "bottom_lip":0.0, "r_eyebrow":0.0, "l_eyebrow":0.0 }
+                       "eyelids":0.0, "top_lip":0.0, "bottom_lip":-0.5, "r_eyebrow":0.0, "l_eyebrow":0.0 }
 
     def angry(self, data = None):
         self.eyecolor = red
@@ -53,7 +54,10 @@ class virtualFace:
         eY = int(self.joints["eye_tilt"] * w/10)
         # mouth is between 0 and 1
         sMouth = 50 * (self.joints["top_lip"] - self.joints["bottom_lip"]) #25 
-        
+    
+        # clear screen
+        pygame.draw.rect(self.screen, white, (0,0,600,500))        
+
         # body of head -- make this 3D-ish, and neck        
         pygame.draw.rect(self.screen, botSide, (cX - w/6, cY,w/3,cY) )
         pygame.draw.rect(self.screen, botBody, (cX - w/2, cY - h/2,w,h) )
