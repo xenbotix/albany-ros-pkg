@@ -1,0 +1,25 @@
+<package>
+  <description brief="chess_piece_locator">
+
+     chess_piece_locator
+
+  </description>
+  <author>james</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/chess_piece_locator</url>
+
+  <depend package="roscpp" />
+  <depend package="pcl_ros" />
+  <depend package="chess_msgs" />
+  <depend package="nodelet" />
+  <depend package="nodelet_topic_tools" />
+
+  <export>
+    <nodelet plugin="${prefix}/nodelets.xml" />
+  </export>
+
+
+</package>
+
+
