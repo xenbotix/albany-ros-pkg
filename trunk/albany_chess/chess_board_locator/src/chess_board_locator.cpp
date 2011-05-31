@@ -12,9 +12,6 @@
 #include <math.h>
 
 #include <ros/ros.h>
-
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <image_transport/image_transport.h>
 
@@ -22,10 +19,6 @@
 #include <opencv/highgui.h>
 #include <cv_bridge/cv_bridge.h>
 #include <tf/transform_broadcaster.h>
-
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
 
 #include <pcl/io/io.h>
 #include <pcl/point_types.h>
@@ -39,13 +32,16 @@
 #include <chess_board_locator/LocatorConfig.h>
 
 using namespace std;
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> CameraSyncPolicy;
 typedef pcl::PointXYZ point;
 typedef pcl::PointXYZRGB color_point;
 
 /** @brief Helper function to find intersection of two lines */ 
 cv::Point findIntersection( cv::Vec4i a, cv::Vec4i b )
 {
+    /* 5/30/11 - added these checks to avoid problems with vertical lines -- MEF */
+    if( a[2] == a[0] ) a[2]++;
+    if( b[2] == b[0] ) b[2]++;
+
     double ma = (a[3]-a[1])/(double)(a[2]-a[0]);
     double mb = (b[3]-b[1])/(double)(b[2]-b[0]);
     double ba = a[1] - ma*a[0];
@@ -76,7 +72,7 @@ tf::Transform tfFromEigen(Eigen::Matrix4f trans)
 
 /** @brief A class for locating the chess board and publishing a transform. 
   * Detection proceeds as follows--
-  *   1)  RGB image is converted a grayscale using the blue-channel only. 
+  *   1)  RGB image is converted a grayscale using the X-channel only. 
   *   2)  We threshold the image and then run a Canny edge detector, 
   *         various dilations/erosions are used to improve performance. 
   *   3)  We perform a hough transformation to find lines.
@@ -93,11 +89,8 @@ class ChessBoardLocator
     typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
 
     ChessBoardLocator(ros::NodeHandle & n): nh_ (n),
-        image_sub_ (nh_, "/camera/rgb/image_color", 3),
-        cloud_sub_(nh_, "/camera/rgb/points", 3),
-        sync_(CameraSyncPolicy(10), image_sub_, cloud_sub_),
         msgs_(0),   
-        channel_(0),
+        channel_(2),    /* why oh why? */
         output_image_(false)
     {
         ros::NodeHandle nh ("~");
@@ -111,13 +104,17 @@ class ChessBoardLocator
         if (!nh.getParam ("h_min_length", h_min_length_))
             h_min_length_ = 100;
         ROS_INFO ("Hough Min Length: %d", h_min_length_);    
+        if (!nh.getParam ("e_threshold", e_threshold_))
+            e_threshold_ = 0.001;
+        ROS_INFO ("Error Threshold: %f", e_threshold_); 
 
         // publisher for image output
         image_transport::ImageTransport it(nh);
         pub_ = it.advertise("image",1);
 
-        sync_.registerCallback(boost::bind(&ChessBoardLocator::cameraCallback, this, _1, _2));
-
+        // subscribe to just the cloud now
+        cloud_sub_ = nh_.subscribe("/camera/rgb/points", 1, &ChessBoardLocator::cameraCallback, this);
+        
         // initialize dynamic reconfigure
         reconfigure_server_.reset (new ReconfigureServer (reconfigure_mutex_, nh));
         reconfigure_server_->setCallback (boost::bind (&ChessBoardLocator::configCallback, this, _1, _2));
@@ -126,22 +123,27 @@ class ChessBoardLocator
     /* 
      * Determine transform for chess board
      */
-    void cameraCallback ( const sensor_msgs::ImageConstPtr& image,
-                          const sensor_msgs::PointCloud2ConstPtr& depth)
+    void cameraCallback ( const sensor_msgs::PointCloud2ConstPtr& msg )
     {
-        // convert image
+        sensor_msgs::ImagePtr image_msg(new sensor_msgs::Image);
+
+        // convert cloud to PCL
+        pcl::PointCloud<color_point> cloud;
+        pcl::fromROSMsg(*msg, cloud);
+ 
+        // get an OpenCV image from the cloud
+        pcl::toROSMsg (cloud, *image_msg);
+
+        // convert image to OpenCV 
         try
         {
-            bridge_ = cv_bridge::toCvCopy(image, "bgr8");
+            bridge_ = cv_bridge::toCvCopy(image_msg, "rgb8");
             ROS_INFO("New image/cloud.");
         }
         catch(cv_bridge::Exception& e)
         {
-           ROS_ERROR("Conversion failed");
+            ROS_ERROR("Conversion failed");
         }
-        // convert cloud from sensor message
-        pcl::PointCloud<color_point> cloud;
-        pcl::fromROSMsg(*depth, cloud);
 
         // segment based on a channel (blue board squares)
         cv::Mat dst, cdst;
@@ -205,8 +207,8 @@ class ChessBoardLocator
 
         // get all intersections
         pcl::PointCloud<point> data;
-        data.header.frame_id  = depth->header.frame_id;
-        data.header.stamp  = depth->header.stamp;
+        data.header.frame_id  = msg->header.frame_id;
+        data.header.stamp  = msg->header.stamp;
         for( size_t i = 0; i < h_indexes.size(); i++ )
         {
             cv::Vec4i hl = lines[h_indexes[i]];
@@ -253,64 +255,70 @@ class ChessBoardLocator
                 h1_candidates.push_back(i);
         }
 
-        // ideal board of a1, a8, h1        
-        pcl::PointCloud<point> board;
-        board.push_back( point(0.05715, 0.05715, 0) );   // a1
-        board.push_back( point(0.05715, 0.05715*7, 0) ); // a8
-        board.push_back( point(0.05715*7, 0.05715, 0) ); // h1
         // evaluate candidates
-        float best_score = -1.0;
+        float best_score = 1000.0;
         Eigen::Matrix4f best_transform;
         ROS_DEBUG("Evaluating %d candidates", (int) (a1_candidates.size() * a8_candidates.size() * h1_candidates.size()));
-        for( size_t i = 0; i < a1_candidates.size(); i++ ){
-            for( size_t j = 0; j < a8_candidates.size(); j++ ){
-                for( size_t k = 0; k < h1_candidates.size(); k++ ){
-                    Eigen::Matrix4f t;
-                    point a1 = data.points[a1_candidates[i]];
-                    point a8 = data.points[a8_candidates[j]];
-                    point h1 = data.points[h1_candidates[k]];
-                    // construct a basis
-                    pcl::PointCloud<point> candidates;
-                    candidates.push_back(a1);
-                    candidates.push_back(a8);
-                    candidates.push_back(h1);
-                    // estimate transform
-                    pcl::estimateRigidTransformationSVD( candidates, board, t );
-                    // transform whole cloud
-                    pcl::PointCloud<point> data_transformed;
-                    pcl::transformPointCloud( data, data_transformed, t );
-                    // compute error
-                    float error = 0.0;
-                    for( size_t p = 0; p < data_transformed.points.size(); p++)
-                    {
-                        point pt = data_transformed.points[p];
-                        // TODO: can we speed this up?
-                        float e = 1000;
-                        for( int x = 1; x < 8; x++)
-                        {   
-                            for( int y = 1; y < 8; y++)
-                            {
-                                float iter = (0.05715*x-pt.x)*(0.05715*x-pt.x)+(0.05715*y-pt.y)*(0.05715*y-pt.y);
-                                if(iter < e)
-                                    e = iter;
+
+        for( size_t iter = 1; iter < 4; iter++){
+            // ideal board of a1, a8, h1 (then b2, b7, g2, etc)
+            pcl::PointCloud<point> board;
+            board.push_back( point(0.05715*iter, 0.05715*iter, 0) );     // a1
+            board.push_back( point(0.05715*iter, 0.05715*(8-iter), 0) ); // a8
+            board.push_back( point(0.05715*(8-iter), 0.05715*iter, 0) ); // h1
+
+            for( size_t i = 0; i < a1_candidates.size(); i++ ){
+                for( size_t j = 0; j < a8_candidates.size(); j++ ){
+                    for( size_t k = 0; k < h1_candidates.size(); k++ ){
+                        Eigen::Matrix4f t;
+                        point a1 = data.points[a1_candidates[i]];
+                        point a8 = data.points[a8_candidates[j]];
+                        point h1 = data.points[h1_candidates[k]];
+                        // construct a basis
+                        pcl::PointCloud<point> candidates;
+                        candidates.push_back(a1);
+                        candidates.push_back(a8);
+                        candidates.push_back(h1);
+                        // estimate transform
+                        pcl::estimateRigidTransformationSVD( candidates, board, t );
+                        // transform whole cloud
+                        pcl::PointCloud<point> data_transformed;
+                        pcl::transformPointCloud( data, data_transformed, t );
+                        // compute error
+                        float error = 0.0;
+                        for( size_t p = 0; p < data_transformed.points.size(); p++)
+                        {
+                            point pt = data_transformed.points[p];
+                            // TODO: can we speed this up?
+                            float e = 1000;
+                            for( int x = 1; x < 8; x++)
+                            {   
+                                for( int y = 1; y < 8; y++)
+                                {
+                                    float test = (0.05715*x-pt.x)*(0.05715*x-pt.x)+(0.05715*y-pt.y)*(0.05715*y-pt.y);
+                                    if(test < e)
+                                        e = test;
+                                }
                             }
+                            error += e;
                         }
-                        error += e;
+                        // update
+                        if( error < best_score )
+                        {
+                            best_score = error;
+                            best_transform = t;
+                        }                    
                     }
-                    // update
-                    if( (best_score < 0) || (error < best_score) )
-                    {
-                        best_score = error;
-                        best_transform = t;
-                    }                    
                 }
-            }
-        }    
-        ROS_DEBUG("final score %f", best_score);   
+            }    
+            ROS_INFO("best score %f", best_score);   
+            // error is under threshold, we are likely done
+            if(best_score < e_threshold_) break;
+        }
           
         // publish transform
         tf::Transform transform = tfFromEigen(best_transform.inverse());
-        br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), depth->header.frame_id, "chess_board"));
+        br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), msg->header.frame_id, "chess_board"));
         ROS_INFO("published %d", msgs_++);
 
         if(output_image_){
@@ -332,9 +340,7 @@ class ChessBoardLocator
   private: 
     /* node handles, subscribers, publishers, etc */
     ros::NodeHandle nh_;
-    message_filters::Subscriber<sensor_msgs::Image> image_sub_; 
-    message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub_;
-    message_filters::Synchronizer<CameraSyncPolicy> sync_;
+    ros::Subscriber cloud_sub_;
     image_transport::Publisher pub_;
     tf::TransformBroadcaster br_;
     cv_bridge::CvImagePtr bridge_;
@@ -347,6 +353,7 @@ class ChessBoardLocator
     int h_rho_;
     int h_threshold_;
     int h_min_length_;
+    double e_threshold_;
     int msgs_;
     int channel_;
     bool output_image_;
@@ -360,5 +367,4 @@ int main (int argc, char **argv)
   ros::spin();
   return 0;
 }
-
 
