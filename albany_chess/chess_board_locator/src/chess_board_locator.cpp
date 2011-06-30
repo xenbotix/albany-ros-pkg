@@ -90,7 +90,7 @@ class ChessBoardLocator
 
     ChessBoardLocator(ros::NodeHandle & n): nh_ (n),
         msgs_(0),   
-        channel_(2),    /* why oh why? */
+        channel_(0),    /* why oh why? */
         output_image_(false)
     {
         ros::NodeHandle nh ("~");
@@ -258,7 +258,7 @@ class ChessBoardLocator
         // evaluate candidates
         float best_score = 1000.0;
         Eigen::Matrix4f best_transform;
-        ROS_DEBUG("Evaluating %d candidates", (int) (a1_candidates.size() * a8_candidates.size() * h1_candidates.size()));
+        ROS_DEBUG("Evaluating %d candidates (%d, %d, %d)", (int) (a1_candidates.size() * a8_candidates.size() * h1_candidates.size()), (int) a1_candidates.size(), (int) a8_candidates.size(), (int) h1_candidates.size());
 
         for( size_t iter = 1; iter < 4; iter++){
             // ideal board of a1, a8, h1 (then b2, b7, g2, etc)
