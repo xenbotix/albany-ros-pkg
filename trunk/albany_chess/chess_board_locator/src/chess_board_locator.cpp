@@ -24,6 +24,7 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/registration.h>
+#include <pcl/filters/radius_outlier_removal.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
@@ -34,6 +35,8 @@
 using namespace std;
 typedef pcl::PointXYZ point;
 typedef pcl::PointXYZRGB color_point;
+
+using std::isnan;
 
 /** @brief Helper function to find intersection of two lines */ 
 cv::Point findIntersection( cv::Vec4i a, cv::Vec4i b )
@@ -55,6 +58,19 @@ cv::Point findIntersection( cv::Vec4i a, cv::Vec4i b )
     }else{
         return cv::Point(-1,-1);
     }
+}
+
+/** @brief Helper function to decide whether to accept a point */
+bool accept(color_point& cp, pcl::PointCloud<point>::ConstPtr cloud)
+{
+    if( isnan(cp.x) || isnan(cp.y) || isnan(cp.z) ) return false;
+    for(size_t k = 0; k < cloud->points.size(); k++)
+    {   
+        point tp = cloud->points[k];
+        if( abs(tp.x-cp.x) + abs(tp.y-cp.y) + abs(tp.z-cp.z) < 0.05 )
+            return false;
+    }
+    return true;
 }
 
 /** @brief Helper function to convert Eigen transformation to tf -- thanks to Garret Gallagher */
@@ -85,12 +101,14 @@ tf::Transform tfFromEigen(Eigen::Matrix4f trans)
 class ChessBoardLocator
 {
   public:
+    static const int square_size = 0.05715;
+
     typedef chess_board_locator::LocatorConfig Config;
     typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
 
     ChessBoardLocator(ros::NodeHandle & n): nh_ (n),
         msgs_(0),   
-        channel_(0),    /* why oh why? */
+        channel_(0),
         output_image_(false)
     {
         ros::NodeHandle nh ("~");
@@ -114,6 +132,7 @@ class ChessBoardLocator
 
         // subscribe to just the cloud now
         cloud_sub_ = nh_.subscribe("/camera/rgb/points", 1, &ChessBoardLocator::cameraCallback, this);
+        cloud_pub_ = nh_.advertise< pcl::PointCloud<point> >("cloud", 1);
         
         // initialize dynamic reconfigure
         reconfigure_server_.reset (new ReconfigureServer (reconfigure_mutex_, nh));
@@ -218,35 +237,65 @@ class ChessBoardLocator
                 cv::Point p = findIntersection(hl,vl);
                 if(p.x > 0 && p.y > 0){
                     color_point cp = cloud(p.x,p.y);
-                    bool include = true;
-                    for(size_t k = 0; k < data.points.size(); k++)
-                    {   
-                        point tp = data.points[k];
-                        if( abs(tp.x-cp.x) + abs(tp.y-cp.y) + abs(tp.z-cp.z) < 0.03 ){
-                            include = false;
-                            break;
-                        }
-                    }
-                    if(include)
-                        data.push_back( point(cp.x,cp.y,cp.z) );
-                    if(output_image_)
+                    if( accept(cp, data.makeShared()) )
                     {
-                        cv::circle( cdst, p, 5, cv::Scalar(255,0,0), -1 );
+                        data.push_back( point(cp.x,cp.y,cp.z) );
+                        if(output_image_)
+                        {
+                            cv::circle( cdst, p, 5, cv::Scalar(255,0,0), -1 );
+                        }
                     }
                 }
             }
         }
-        ROS_DEBUG("Created data cloud of size %d", (int)data.points.size());
+        // add endpoints
+        for( size_t i = 0; i < lines.size(); i++ )
+        {
+            cv::Vec4i l = lines[i];
+            cv::Point e1(l[0],l[1]);
+            cv::Point e2(l[2],l[3]);
+
+            color_point cp = cloud(e1.x,e1.y);
+            if( accept(cp, data.makeShared()) )
+            {
+                data.push_back( point(cp.x,cp.y,cp.z) );
+                if(output_image_)
+                {
+                    cv::circle( cdst, e1, 5, cv::Scalar(255,0,0), -1 );
+                }
+            }
+
+            cp = cloud(e2.x,e2.y);
+            if( accept(cp, data.makeShared()) )
+            {
+                data.push_back( point(cp.x,cp.y,cp.z) );
+                if(output_image_)
+                {
+                    cv::circle( cdst, e2, 5, cv::Scalar(255,0,0), -1 );
+                }
+            }
+        }
+        ROS_INFO("Created data cloud of size %d", (int)data.points.size());
+
+        // remove outliers
+        pcl::PointCloud<point> data_filtered;
+        radius_removal_.setMinNeighborsInRadius(2);
+        radius_removal_.setRadiusSearch(0.06);
+        radius_removal_.setInputCloud(data.makeShared());
+        radius_removal_.filter(data_filtered);
+
+        ROS_INFO("Filtered data cloud of size %d", (int)data_filtered.points.size());
 
         // find centroid of intersections
         Eigen::Vector4f centroid; 
-        pcl::compute3DCentroid(data, centroid);
+        pcl::compute3DCentroid(data_filtered, centroid);
+        ROS_INFO("Centroid (%f, %f)", centroid[0], centroid[1]);
 
         // find corner candidates - x right, y down
         vector<int> a1_candidates, a8_candidates, h1_candidates;
-        for( size_t i = 0; i < data.points.size(); i++ )
+        for( size_t i = 0; i < data_filtered.points.size(); i++ )
         {
-            point p = data.points[i];
+            point p = data_filtered.points[i];
             if( (p.x < centroid[0]-0.05) && (p.y > centroid[1]+0.05) )
                 a1_candidates.push_back(i);
             else if( (p.x < centroid[0]-0.05) && (p.y < centroid[1]-0.05) )
@@ -257,8 +306,10 @@ class ChessBoardLocator
 
         // evaluate candidates
         float best_score = 1000.0;
+        int best_points = 0;
+        pcl::PointCloud<point> best_cloud;
         Eigen::Matrix4f best_transform;
-        ROS_DEBUG("Evaluating %d candidates (%d, %d, %d)", (int) (a1_candidates.size() * a8_candidates.size() * h1_candidates.size()), (int) a1_candidates.size(), (int) a8_candidates.size(), (int) h1_candidates.size());
+        ROS_INFO("Evaluating %d candidates (%d, %d, %d)", (int) (a1_candidates.size() * a8_candidates.size() * h1_candidates.size()), (int) a1_candidates.size(), (int) a8_candidates.size(), (int) h1_candidates.size());
 
         for( size_t iter = 1; iter < 4; iter++){
             // ideal board of a1, a8, h1 (then b2, b7, g2, etc)
@@ -271,9 +322,9 @@ class ChessBoardLocator
                 for( size_t j = 0; j < a8_candidates.size(); j++ ){
                     for( size_t k = 0; k < h1_candidates.size(); k++ ){
                         Eigen::Matrix4f t;
-                        point a1 = data.points[a1_candidates[i]];
-                        point a8 = data.points[a8_candidates[j]];
-                        point h1 = data.points[h1_candidates[k]];
+                        point a1 = data_filtered.points[a1_candidates[i]];
+                        point a8 = data_filtered.points[a8_candidates[j]];
+                        point h1 = data_filtered.points[h1_candidates[k]];
                         // construct a basis
                         pcl::PointCloud<point> candidates;
                         candidates.push_back(a1);
@@ -283,38 +334,48 @@ class ChessBoardLocator
                         pcl::estimateRigidTransformationSVD( candidates, board, t );
                         // transform whole cloud
                         pcl::PointCloud<point> data_transformed;
-                        pcl::transformPointCloud( data, data_transformed, t );
+                        pcl::transformPointCloud( data_filtered, data_transformed, t );
                         // compute error
                         float error = 0.0;
+                        int points = 0;
                         for( size_t p = 0; p < data_transformed.points.size(); p++)
                         {
                             point pt = data_transformed.points[p];
                             // TODO: can we speed this up?
                             float e = 1000;
-                            for( int x = 1; x < 8; x++)
+                            for( int x = 0; x <= 8; x++)
                             {   
-                                for( int y = 1; y < 8; y++)
+                                for( int y = 0; y <= 8; y++)
                                 {
                                     float test = (0.05715*x-pt.x)*(0.05715*x-pt.x)+(0.05715*y-pt.y)*(0.05715*y-pt.y);
                                     if(test < e)
                                         e = test;
                                 }
                             }
-                            error += e;
+                            if(e < 0.05){
+                                error += e; 
+                                if( e < 0.02)
+                                    points++;
+                            } // else outlier
                         }
                         // update
-                        if( error < best_score )
+                        if( ((points > (data_transformed.points.size()*3)/4) || (points > 60)) && (error < best_score) )
                         {
-                            best_score = error;
+                            best_score = error; 
+                            best_points = points;
                             best_transform = t;
+                            best_cloud = data_transformed;
                         }                    
                     }
                 }
             }    
-            ROS_INFO("best score %f", best_score);   
+            ROS_INFO("best score %f", best_score);
+            ROS_INFO("best points %d", best_points);   
             // error is under threshold, we are likely done
             if(best_score < e_threshold_) break;
         }
+        best_cloud.header.frame_id = "chess_board";
+        cloud_pub_.publish( best_cloud );
           
         // publish transform
         tf::Transform transform = tfFromEigen(best_transform.inverse());
@@ -341,9 +402,11 @@ class ChessBoardLocator
     /* node handles, subscribers, publishers, etc */
     ros::NodeHandle nh_;
     ros::Subscriber cloud_sub_;
+    ros::Publisher cloud_pub_;
     image_transport::Publisher pub_;
     tf::TransformBroadcaster br_;
     cv_bridge::CvImagePtr bridge_;
+    pcl::RadiusOutlierRemoval<point> radius_removal_;
 
     /* reconfigure server*/
     boost::shared_ptr<ReconfigureServer> reconfigure_server_;
