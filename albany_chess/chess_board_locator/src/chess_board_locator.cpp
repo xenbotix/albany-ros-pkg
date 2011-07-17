@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <limits>
 #include <math.h>
+#include <stdlib.h>
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -123,7 +124,7 @@ class ChessBoardLocator
             h_min_length_ = 100;
         ROS_INFO ("Hough Min Length: %d", h_min_length_);    
         if (!nh.getParam ("e_threshold", e_threshold_))
-            e_threshold_ = 0.001;
+            e_threshold_ = 0.002;
         ROS_INFO ("Error Threshold: %f", e_threshold_); 
 
         // publisher for image output
@@ -286,6 +287,9 @@ class ChessBoardLocator
 
         ROS_INFO("Filtered data cloud of size %d", (int)data_filtered.points.size());
 
+        for(int k = 0; k < 500; k++){
+          
+        }
         // find centroid of intersections
         Eigen::Vector4f centroid; 
         pcl::compute3DCentroid(data_filtered, centroid);
@@ -325,10 +329,14 @@ class ChessBoardLocator
                         point a1 = data_filtered.points[a1_candidates[i]];
                         point a8 = data_filtered.points[a8_candidates[j]];
                         point h1 = data_filtered.points[h1_candidates[k]];
+                        // check reasonableness
+                        if( (abs(pcl::euclideanDistance(a1,a8) - (0.05715*(8-iter*2))) > 0.02 ) ||
+                            (abs(pcl::euclideanDistance(a1,h1) - (0.05715*(8-iter*2))) > 0.02 ) ||
+                            (abs(pcl::euclideanDistance(h1,a8) - (0.05715*(8-iter*2)*1.4142)) > 0.02 ) ) continue;
                         // construct a basis
                         pcl::PointCloud<point> candidates;
                         candidates.push_back(a1);
-                        candidates.push_back(a8);
+                        candidates.push_back(a8); 
                         candidates.push_back(h1);
                         // estimate transform
                         pcl::estimateRigidTransformationSVD( candidates, board, t );
@@ -374,6 +382,7 @@ class ChessBoardLocator
             // error is under threshold, we are likely done
             if(best_score < e_threshold_) break;
         }
+
         best_cloud.header.frame_id = "chess_board";
         cloud_pub_.publish( best_cloud );
           
