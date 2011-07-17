@@ -19,47 +19,55 @@
 """
 
 import roslib; roslib.load_manifest('chess_executive')
-import rospy
-import pexpect
+import rospy    # for logging
+import pexpect  # for connecting to gnu chess
 
 from chess_msgs.msg import *
 
+SQUARE_SIZE = 0.05715
 
 class BoardState:
     """ A representation of a chess board state. """
+    WHITE = 1
+    BLACK = -1
 
     def __init__(self):
         """ 
         Initialize an empty board
         """
         self.values = [None for i in range(64)]
+        self.last_move = "go"
+        self.side = self.WHITE
+        self.up_to_date = True
+        self.max_changes = 2
 
     def newGame(self):
         """ 
         Initialize a new board
         """
+        self.last_move = "go"
         self.values = [None for i in range(64)]
         for i in range(8):
-            self.setPiece(1, i, self.makePiece(ChessPiece.WHITE_PAWN))
-            self.setPiece(6, i, self.makePiece(ChessPiece.BLACK_PAWN))
+            self.setPiece(i, 2, self.makePiece(ChessPiece.WHITE_PAWN))
+            self.setPiece(i, 7, self.makePiece(ChessPiece.BLACK_PAWN))
 
-        self.setPiece(0, 0, self.makePiece(ChessPiece.WHITE_ROOK))
-        self.setPiece(0, 1, self.makePiece(ChessPiece.WHITE_KNIGHT))
-        self.setPiece(0, 2, self.makePiece(ChessPiece.WHITE_BISHOP))
-        self.setPiece(0, 3, self.makePiece(ChessPiece.WHITE_QUEEN))
-        self.setPiece(0, 4, self.makePiece(ChessPiece.WHITE_KING))
-        self.setPiece(0, 5, self.makePiece(ChessPiece.WHITE_BISHOP))
-        self.setPiece(0, 6, self.makePiece(ChessPiece.WHITE_KNIGHT))
-        self.setPiece(0, 7, self.makePiece(ChessPiece.WHITE_ROOK))
+        self.setPiece('a', 1, self.makePiece(ChessPiece.WHITE_ROOK))
+        self.setPiece('b', 1, self.makePiece(ChessPiece.WHITE_KNIGHT))
+        self.setPiece('c', 1, self.makePiece(ChessPiece.WHITE_BISHOP))
+        self.setPiece('d', 1, self.makePiece(ChessPiece.WHITE_QUEEN))
+        self.setPiece('e', 1, self.makePiece(ChessPiece.WHITE_KING))
+        self.setPiece('f', 1, self.makePiece(ChessPiece.WHITE_BISHOP))
+        self.setPiece('g', 1, self.makePiece(ChessPiece.WHITE_KNIGHT))
+        self.setPiece('h', 1, self.makePiece(ChessPiece.WHITE_ROOK))
 
-        self.setPiece(7, 0, self.makePiece(ChessPiece.BLACK_ROOK))
-        self.setPiece(7, 1, self.makePiece(ChessPiece.BLACK_KNIGHT))
-        self.setPiece(7, 2, self.makePiece(ChessPiece.BLACK_BISHOP))
-        self.setPiece(7, 3, self.makePiece(ChessPiece.BLACK_QUEEN))
-        self.setPiece(7, 4, self.makePiece(ChessPiece.BLACK_KING))
-        self.setPiece(7, 5, self.makePiece(ChessPiece.BLACK_BISHOP))
-        self.setPiece(7, 6, self.makePiece(ChessPiece.BLACK_KNIGHT))
-        self.setPiece(7, 7, self.makePiece(ChessPiece.BLACK_ROOK))
+        self.setPiece('a', 8, self.makePiece(ChessPiece.BLACK_ROOK))
+        self.setPiece('b', 8, self.makePiece(ChessPiece.BLACK_KNIGHT))
+        self.setPiece('c', 8, self.makePiece(ChessPiece.BLACK_BISHOP))
+        self.setPiece('d', 8, self.makePiece(ChessPiece.BLACK_QUEEN))
+        self.setPiece('e', 8, self.makePiece(ChessPiece.BLACK_KING))
+        self.setPiece('f', 8, self.makePiece(ChessPiece.BLACK_BISHOP))
+        self.setPiece('g', 8, self.makePiece(ChessPiece.BLACK_KNIGHT))
+        self.setPiece('h', 8, self.makePiece(ChessPiece.BLACK_ROOK))
 
     def makePiece(self, val):
         """ 
@@ -69,36 +77,31 @@ class BoardState:
         p.type = val
         return p
 
-    def setPiece(self, rank, column, piece):
+    def setPiece(self, column, rank, piece):
         """ 
         Set the value of a piece on the board. The piece
         should be a chess_msgs/ChessPiece, which has a 
         pose and type, or None
         
-        Column: 0 = column A
-        Rank:   0 = rank 1
+        Column: 0 or 'a' = column A
+        Rank:   1 = rank 1
         """
         try:
-            self.values[int(rank)*8+int(column)] = piece
+            self.values[int(rank-1)*8+self.getColIdx(column)] = piece
         except:
-            try:
-                self.values[int(rank)*8+(ord(column)-ord('a'))] = piece
-            except:
-                rospy.loginfo("setPiece: invalid row/column")
+            rospy.loginfo("setPiece: invalid row/column")
         
-    def getPiece(self, rank, column):
+    def getPiece(self, column, rank):
         try:
-            return self.values[int(rank)*8+int(column)]
+            return self.values[int(rank-1)*8+self.getColIdx(column)]
         except:
-            try:
-                return self.values[int(rank)*8+(ord(column)-ord('a'))]
-            except:
-                return None
+            return None
 
     def printBoard(self):
-        for i in range(8):
-            for j in range(8):
-                p = self.getPiece(j,i)    # print a1 first
+        """ Print board state to screen. """
+        for c in 'abcdefgh':
+            for r in [1,2,3,4,5,6,7,8]:
+                p = self.getPiece(c,r)    # print a1 first
                 if p == None:
                     print " ",
                 elif p.type > 0:
@@ -107,8 +110,114 @@ class BoardState:
                     print "b",
             print ""
 
+    def applyUpdate(self, message):
+        """ Update the board state, given a new ChessBoard message. """
+        piece_fr  = None   # location moved from
+        piece_to  = None   # location moved to
+        piece_cnt = 0      # number of pieces moved
+        # process ChessBoard message  
+        temp_board = BoardState()  
+        for piece in message.pieces:
+            # get col, rank as "x0"
+            col = self.getColName(int(piece.pose.position.x/SQUARE_SIZE + SQUARE_SIZE/2))
+            rank = int(piece.pose.position.y/SQUARE_SIZE + SQUARE_SIZE/2) + 1
+            if not self.valid(col, rank):
+                continue
+            # update temp board
+            if temp_board.getPiece(col, rank) == None:
+                p = self.getPiece(col, rank)
+                if p == None:
+                    piece_cnt = piece_cnt + 1
+                    if piece_to == None:
+                        piece_to = [col, rank, p] 
+                    rospy.loginfo("Piece moved to: %s%s" % (col,str(rank)))
+#               else:
+#                   piece.type = p.type
+                temp_board.setPiece(col, rank, piece)
+            else:
+#               rospy.logerr("Duplicate piece! %s" % self.toString(col, rank))  
+                pass          
+        temp_board.printBoard()
+        # see how board has changed
+        for col in 'abcdefgh':
+            for rank in [1,2,3,4,5,6,7,8]:
+                old = self.getPiece(col,rank)
+                new = temp_board.getPiece(col,rank)                    
+                if old != None and new == None:
+                    # this piece is gone!
+                    piece_cnt = piece_cnt + 1
+                    piece_fr = [col, rank, old] 
+                    rospy.loginfo("Piece moved from: %s%s" % (col,str(rank)))
+                elif old != None and new != None and new.type/abs(float(new.type)) != old.type/abs(float(old.type)):
+                    # capture!
+                    piece_cnt = piece_cnt + 1
+                    piece_to = [col, rank, new]
+                    rospy.loginfo("Piece captured: %s%s" % (col,str(rank)))
+        # is this plausible?
+        if piece_cnt > self.max_changes:
+            rospy.loginfo("Try again, %d" % piece_cnt)        
+            self.last_move = "fail"
+        else:
+            try:
+                self.last_move = piece_fr[0] + str(piece_fr[1]) + piece_to[0] + str(piece_to[1]) 
+                self.values = temp_board.values
+            except:
+                if piece_fr == None and piece_to == None:
+                    rospy.loginfo("No change")
+                    self.last_move = "none"
+                else:
+                    rospy.loginfo("Try again, from or to not set")             
+                    self.last_move = "fail"    
+        self.up_to_date = True
 
-class GnuChessPlanner:
+    def applyMove(self, move):
+        """ Update the board state, given a move from GNU chess. """
+        (col_f, rank_f) = self.toPosition(move[0:2])
+        (col_t, rank_t) = self.toPosition(move[2:])
+        piece = self.getPiece(col_f, rank_f)
+        self.setPiece(col_t, rank_t, piece) 
+        self.setPiece(col_f, rank_f, None)       
+
+    def computeSide(self):
+        """ Determine which side of the board we are on. """
+        side = 0
+        for c in 'abcdefgh':
+            side += self.getPiece(c,1).type
+            side += self.getPiece(c,2).type
+            side -= self.getPiece(c,7).type
+            side -= self.getPiece(c,8).type       
+            rospy.loginfo("Computed side value of: %d" % side)
+        if side > 0:
+            self.side = self.WHITE
+        else:
+            self.side = self.BLACK
+
+    #######################################################
+    # helpers
+    def toPosition(self, pos):
+        """ Get position for a string name like 'x0'. """
+        return [ord(pos[0])-ord('a'), int(pos[1])]
+
+    def getColName(self, col):
+        """ Convert to column string name. """
+        try:
+            return chr(ord('a') + col)
+        except:
+            return col        
+
+    def getColIdx(self, col):
+        """ Convert to column integer index. """
+        try: 
+            return int(col)
+        except:
+            return ord(col)-ord('a')      
+
+    def valid(self, col, rank):
+        """ Is a particular position valid? """
+        return rank <= 8 and rank > 0 and self.getColIdx(col) < 8 and self.getColIdx(col) >= 0
+
+
+class GnuChessEngine:
     """ Connection to a GNU chess engine. """
 
     def __init__(self):
@@ -124,10 +233,12 @@ class GnuChessPlanner:
 
     def nextMove(self, move="go"):
         """
-        Give opponent's move, get back move to make.
+        Give opponent's move, get back move to make. 
+            returns None if given an invalid move.
         """
         self.engine.sendline(move)        
-        self.engine.expect('My move is')
+        if self.engine.expect(['My move is','Illegal move']) == 1:
+            return None     
         self.engine.expect('([a-h][1-8][a-h][1-8][RrNnBbQq(\r\n)])')
         m = self.engine.after.rstrip()
         self.history.append(m)
