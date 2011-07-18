@@ -26,7 +26,7 @@ from chess_msgs.msg import *
 from std_srvs.srv import *
 
 from chess_utilities import *
-#from arm_utilities import *
+from arm_utilities import *
 
 ###############################################################################
 # Executive for managing chess game
@@ -43,8 +43,8 @@ class ChessExecutive:
 
         # get arm planner TODO
         rospy.loginfo('exec: Waiting for /simple_arm_server/move')
-        #rospy.wait_for_service('/simple_arm_server/move')
-        #self.planner = ArmPlanner( rospy.ServiceProxy('/simple_arm_server/move', MoveArm) )
+        rospy.wait_for_service('/simple_arm_server/move')
+        self.planner = ArmPlanner( rospy.ServiceProxy('/simple_arm_server/move', MoveArm) )
 
         # subscribe to input
         self.board = BoardState()
@@ -53,7 +53,6 @@ class ChessExecutive:
         # subscribe to your move services
         self.yourMove = self.yourMoveKeyboard
         #self.yourMove = self.yourMovePerception
-        #self.Subscriber('/find_arms/output', 
 
         rospy.loginfo("exec: Done initializing...")
 
@@ -64,7 +63,10 @@ class ChessExecutive:
     def yourMoveKeyboard(self):
         # stupid little function to know when move has been made
         print "Please press enter after making a move"
-        raw_input()        
+        x= raw_input()        
+        if x.rstrip() == "exit":
+            self.engine.exit()
+            exit()            
 
     def yourMovePerception(self):
         # 
@@ -113,8 +115,7 @@ class ChessExecutive:
                 move = self.engine.nextMove(self.board.last_move)
             # do move
             rospy.loginfo("exec: My move: %s", move)
-            self.board.applyMove(move)
-            # TODO: actually move piece
+            self.board.applyMove(move, self.planner.execute(move,self.board)) 
 
             # wait for opponents move
             self.yourMove()
