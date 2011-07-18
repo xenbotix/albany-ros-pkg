@@ -39,9 +39,15 @@ class ChessExecutive:
         # connect to camera_turnpike service
         rospy.loginfo('exec: Waiting for /camera_turnpike/trigger')
         rospy.wait_for_service('/camera_turnpike/trigger')
-        self.trigger = rospy.ServiceProxy('/camera_turnpike/trigger', Empty)
+        self.camera_trigger = rospy.ServiceProxy('/camera_turnpike/trigger', Empty)
 
-        # get arm planner TODO
+        # connect to tf_turnpike service
+        rospy.loginfo('exec: Waiting for /tf_turnpike/trigger')
+        rospy.wait_for_service('/tf_turnpike/trigger')
+        self.tf_trigger = rospy.ServiceProxy('/tf_turnpike/trigger', Empty)
+        self.tf_trigger()
+
+        # get arm planner
         rospy.loginfo('exec: Waiting for /simple_arm_server/move')
         rospy.wait_for_service('/simple_arm_server/move')
         self.planner = ArmPlanner( rospy.ServiceProxy('/simple_arm_server/move', MoveArm) )
@@ -51,8 +57,8 @@ class ChessExecutive:
         rospy.Subscriber('/extract_pieces/output', ChessBoard, self.board.applyUpdate) 
 
         # subscribe to your move services
-        self.yourMove = self.yourMoveKeyboard
-        #self.yourMove = self.yourMovePerception
+        #self.yourMove = self.yourMoveKeyboard
+        self.yourMove = self.yourMovePerception
 
         rospy.loginfo("exec: Done initializing...")
 
@@ -72,6 +78,11 @@ class ChessExecutive:
         # 
         pass
 
+    def trigger(self):
+        self.tf_trigger()
+        rospy.sleep(0.1)
+        self.camera_trigger()
+
     ###########################################################################
     # game playing
 
@@ -83,20 +94,8 @@ class ChessExecutive:
         
         # are we white/black?
         self.board.newGame()
-        self.board.up_to_date = False        
-        rospy.loginfo("exec: Calibrate board side...")
-        self.trigger()
-        while not rospy.is_shutdown():
-            if self.board.up_to_date:
-                # can't used update fx, as "none" is acceptable
-                if self.board.last_move == "fail":
-                    self.board.up_to_date = False 
-                    rospy.loginfo("exec: Triggering again to calibrate board side...")
-                    self.trigger()
-                else:
-                    self.board.computeSide()
-                    self.board.newGame()
-                    break
+        self.updateBoardState(True)
+        self.board.computeSide()
 
         if self.board.side == self.board.BLACK:
             # wait for opponents move
@@ -104,12 +103,13 @@ class ChessExecutive:
             # update board state
             self.updateBoardState()
         
-        # loop! TODO: termination?
-        while True: 
+        # loop!
+        while not rospy.is_shutdown(): 
             # do move
             move = self.engine.nextMove(self.board.last_move)
             while move == None:
                 # update board state    
+                self.board.revert()
                 rospy.loginfo("exec: Bad move, triggering again...")
                 self.updateBoardState()
                 move = self.engine.nextMove(self.board.last_move)
@@ -123,25 +123,49 @@ class ChessExecutive:
             # update board state
             self.updateBoardState()
     
-    def updateBoardState(self):
+    def updateBoardState(self, acceptNone = False):
         """ Updates board state by triggering pipeline. """
         self.board.up_to_date = False
         rospy.loginfo("exec: Triggering...")
         self.trigger()
+        t = rospy.Time.now()
         while not rospy.is_shutdown():
+            if (rospy.Time.now()-t).to_sec() > 5.0:
+                self.board.output = True
+                #self.trigger()
+                t = rospy.Time.now()
             if self.board.up_to_date:
-                if self.board.last_move == "fail" or self.board.last_move == "none":
+                if self.board.last_move == "fail":
                     self.board.up_to_date = False 
                     rospy.loginfo("exec: Triggering again...")   
                     self.trigger()
+                elif self.board.last_move == "none":
+                    if acceptNone:
+                        break
+                    else:
+                        self.board.up_to_date = False 
+                        rospy.loginfo("exec: Triggering again...")   
+                        self.trigger()
                 else:
-                    break
+                    if acceptNone:
+                        self.board.up_to_date = False 
+                        rospy.loginfo("exec: Triggering again...")   
+                        self.trigger()
+                    else:
+                        break
+            rospy.sleep(0.1)
+        self.board.printBoard()
 
 
 if __name__=="__main__":
     try:
         executive = ChessExecutive()
+        #try:
         executive.playGame()
+        #finally:           
+        executive.board.printBoard()
+        # shutdown gnuchess, so it doesn't shut us down
+        executive.engine.exit()
     except KeyboardInterrupt:
         pass
 
