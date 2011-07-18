@@ -31,13 +31,13 @@ class BoardState:
     WHITE = 1
     BLACK = -1
 
-    def __init__(self):
+    def __init__(self, side=None):
         """ 
         Initialize an empty board
         """
         self.values = [None for i in range(64)]
         self.last_move = "go"
-        self.side = self.WHITE
+        self.side = side
         self.up_to_date = True
         self.max_changes = 2
 
@@ -67,7 +67,7 @@ class BoardState:
         self.setPiece('e', 8, self.makePiece(ChessPiece.BLACK_KING))
         self.setPiece('f', 8, self.makePiece(ChessPiece.BLACK_BISHOP))
         self.setPiece('g', 8, self.makePiece(ChessPiece.BLACK_KNIGHT))
-        self.setPiece('h', 8, self.makePiece(ChessPiece.BLACK_ROOK))
+        self.setPiece('h', 8, self.makePiece(ChessPiece.BLACK_ROOK))            
 
     def makePiece(self, val):
         """ 
@@ -96,19 +96,32 @@ class BoardState:
             return self.values[int(rank-1)*8+self.getColIdx(column)]
         except:
             return None
+    def getPieceType(self, column, rank):
+        try:
+            return self.values[int(rank-1)*8+self.getColIdx(column)].type
+        except:
+            return 0
 
     def printBoard(self):
         """ Print board state to screen. """
-        for c in 'abcdefgh':
+        if self.side == self.WHITE or self.side == None:
+            for r in [8,7,6,5,4,3,2,1]:
+                for c in 'abcdefgh':
+                    p = self.getPiece(c,r)    # print a8 first
+                    if p == None:
+                        print " ",
+                    else:
+                        print self.getPieceName(p.type),
+                print ""
+        else:
             for r in [1,2,3,4,5,6,7,8]:
-                p = self.getPiece(c,r)    # print a1 first
-                if p == None:
-                    print " ",
-                elif p.type > 0:
-                    print "w",
-                else:
-                    print "b",
-            print ""
+                for c in 'hgfedcba':
+                    p = self.getPiece(c,r)    # print h1 first
+                    if p == None:
+                        print " ",
+                    else:
+                        print self.getPieceName(p.type),
+                print ""
 
     def applyUpdate(self, message):
         """ Update the board state, given a new ChessBoard message. """
@@ -116,45 +129,67 @@ class BoardState:
         piece_to  = None   # location moved to
         piece_cnt = 0      # number of pieces moved
         # process ChessBoard message  
-        temp_board = BoardState()  
+        temp_board = BoardState(self.side)  
         for piece in message.pieces:
             # get col, rank as "x0"
-            col = self.getColName(int(piece.pose.position.x/SQUARE_SIZE + SQUARE_SIZE/2))
-            rank = int(piece.pose.position.y/SQUARE_SIZE + SQUARE_SIZE/2) + 1
+            if self.side == self.WHITE or self.side == None:
+                col = self.getColName(int(piece.pose.position.x/SQUARE_SIZE))
+                rank = int(piece.pose.position.y/SQUARE_SIZE) + 1
+            else:
+                col = self.getColName(7 - int(piece.pose.position.x/SQUARE_SIZE))
+                rank = 8 - int(piece.pose.position.y/SQUARE_SIZE)
             if not self.valid(col, rank):
                 continue
             # update temp board
             if temp_board.getPiece(col, rank) == None:
                 p = self.getPiece(col, rank)
-                if p == None:
+                if p == None and not self.side == None:
                     piece_cnt = piece_cnt + 1
                     if piece_to == None:
-                        piece_to = [col, rank, p] 
+                        piece_to = [col, rank, piece] 
                     rospy.loginfo("Piece moved to: %s%s" % (col,str(rank)))
 #               else:
 #                   piece.type = p.type
                 temp_board.setPiece(col, rank, piece)
-            else:
+#           else:
 #               rospy.logerr("Duplicate piece! %s" % self.toString(col, rank))  
-                pass          
-        temp_board.printBoard()
+#               pass          
         # see how board has changed
         for col in 'abcdefgh':
             for rank in [1,2,3,4,5,6,7,8]:
                 old = self.getPiece(col,rank)
                 new = temp_board.getPiece(col,rank)                    
-                if old != None and new == None:
+                if new == None and old != None and not self.side == None:
                     # this piece is gone!
                     piece_cnt = piece_cnt + 1
-                    piece_fr = [col, rank, old] 
+                    piece_fr = [col, rank, old]
                     rospy.loginfo("Piece moved from: %s%s" % (col,str(rank)))
                 elif old != None and new != None and new.type/abs(float(new.type)) != old.type/abs(float(old.type)):
                     # capture!
                     piece_cnt = piece_cnt + 1
                     piece_to = [col, rank, new]
-                    rospy.loginfo("Piece captured: %s%s" % (col,str(rank)))
+                    rospy.loginfo("Piece captured: %s%s" % (col,str(rank))) 
+                elif old != None and new != None:
+                    # boring, but update types!
+                    new.type = old.type
+                    temp_board.setPiece(col,rank,new)
+        # update types
+        if piece_to != None and piece_fr != None:
+            fr = self.getPiece(piece_fr[0], piece_fr[1])
+            to = temp_board.getPiece(piece_to[0], piece_to[1])
+            to.type = fr.type
+            temp_board.setPiece(piece_to[0],piece_to[1],to)
+        temp_board.printBoard()
         # is this plausible?
-        if piece_cnt > self.max_changes:
+        if self.side == None:
+            if piece_cnt < 6 or piece_cnt > 26:
+                rospy.loginfo("No side set, done") 
+                self.last_move = "none"
+                self.values = temp_board.values
+            else:
+                rospy.loginfo("Try again, %d" % piece_cnt)        
+                self.last_move = "fail"
+        elif piece_cnt > self.max_changes:
             rospy.loginfo("Try again, %d" % piece_cnt)        
             self.last_move = "fail"
         else:
@@ -170,11 +205,12 @@ class BoardState:
                     self.last_move = "fail"    
         self.up_to_date = True
 
-    def applyMove(self, move):
+    def applyMove(self, move, pose=None):
         """ Update the board state, given a move from GNU chess. """
         (col_f, rank_f) = self.toPosition(move[0:2])
         (col_t, rank_t) = self.toPosition(move[2:])
         piece = self.getPiece(col_f, rank_f)
+        piece.pose = pose
         self.setPiece(col_t, rank_t, piece) 
         self.setPiece(col_f, rank_f, None)       
 
@@ -182,10 +218,10 @@ class BoardState:
         """ Determine which side of the board we are on. """
         side = 0
         for c in 'abcdefgh':
-            side += self.getPiece(c,1).type
-            side += self.getPiece(c,2).type
-            side -= self.getPiece(c,7).type
-            side -= self.getPiece(c,8).type       
+            side += self.getPieceType(c,1)
+            side += self.getPieceType(c,2)
+            side -= self.getPieceType(c,7)
+            side -= self.getPieceType(c,8)       
             rospy.loginfo("Computed side value of: %d" % side)
         if side > 0:
             self.side = self.WHITE
@@ -195,7 +231,7 @@ class BoardState:
     #######################################################
     # helpers
     def toPosition(self, pos):
-        """ Get position for a string name like 'x0'. """
+        """ Get position for a string name like 'a1'. """
         return [ord(pos[0])-ord('a'), int(pos[1])]
 
     def getColName(self, col):
@@ -216,6 +252,32 @@ class BoardState:
         """ Is a particular position valid? """
         return rank <= 8 and rank > 0 and self.getColIdx(col) < 8 and self.getColIdx(col) >= 0
 
+    def getPieceName(self, piece_type):
+        if piece_type == ChessPiece.WHITE_PAWN:
+            return "P"
+        elif piece_type == ChessPiece.WHITE_ROOK:
+            return "R"
+        elif piece_type == ChessPiece.WHITE_KNIGHT:
+            return "N"
+        elif piece_type == ChessPiece.WHITE_BISHOP:
+            return "B"
+        elif piece_type == ChessPiece.WHITE_QUEEN:
+            return "Q"
+        elif piece_type == ChessPiece.WHITE_KING:
+            return "K"
+        elif piece_type == ChessPiece.BLACK_PAWN:
+            return "p"
+        elif piece_type == ChessPiece.BLACK_ROOK:
+            return "r"
+        elif piece_type == ChessPiece.BLACK_KNIGHT:
+            return "n"
+        elif piece_type == ChessPiece.BLACK_BISHOP:
+            return "b"
+        elif piece_type == ChessPiece.BLACK_QUEEN:
+            return "q"
+        elif piece_type == ChessPiece.BLACK_KING:
+            return "k"
+        return "x"
 
 class GnuChessEngine:
     """ Connection to a GNU chess engine. """
@@ -242,6 +304,12 @@ class GnuChessEngine:
         self.engine.expect('([a-h][1-8][a-h][1-8][RrNnBbQq(\r\n)])')
         m = self.engine.after.rstrip()
         self.history.append(m)
+        rospy.loginfo(str(self.engine))
         return m
 
+    def exit(self):
+        print "game review:"
+        for h in self.history:
+            print h
+        self.engine.sendline('exit')
 
