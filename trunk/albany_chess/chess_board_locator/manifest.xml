@@ -13,6 +13,7 @@
   <depend package="message_filters"/>
   <depend package="dynamic_reconfigure"/>
   <depend package="image_transport"/>
+  <depend package="std_srvs"/>
 </package>
 
 

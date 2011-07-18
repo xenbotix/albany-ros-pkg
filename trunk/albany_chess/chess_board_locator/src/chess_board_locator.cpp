@@ -1,6 +1,20 @@
 /**
 
-\author Michael Ferguson
+Copyright (c) 2011 Michael E. Ferguson.  All right reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 @b Publish a transform between the checkerboard and the camera link. 
 
@@ -277,6 +291,7 @@ class ChessBoardLocator
             }
         }
         ROS_INFO("Created data cloud of size %d", (int)data.points.size());
+        if( (int) data.points.size() == 0 ) return;
 
         // remove outliers
         pcl::PointCloud<point> data_filtered;
@@ -383,12 +398,12 @@ class ChessBoardLocator
             if(best_score < e_threshold_) break;
         }
 
-        best_cloud.header.frame_id = "chess_board";
+        best_cloud.header.frame_id = "chess_board_raw";
         cloud_pub_.publish( best_cloud );
           
         // publish transform
         tf::Transform transform = tfFromEigen(best_transform.inverse());
-        br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), msg->header.frame_id, "chess_board"));
+        br_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), msg->header.frame_id, "chess_board_raw"));
         ROS_INFO("published %d", msgs_++);
 
         if(output_image_){
