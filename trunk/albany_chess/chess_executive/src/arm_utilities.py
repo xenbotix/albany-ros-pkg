@@ -31,9 +31,12 @@ from simple_arm_server.srv import *
 from chess_utilities import SQUARE_SIZE
 from tuck_arm import *
 
+TIME_FACTOR = 0.5
+GRIPPER_OPEN = 0.05
+GRIPPER_CLOSE = 0.005
+
 class ArmPlanner:
     """ Connection to the arm server. """
-    SQUARE_SIZE = 0.05715
     
     def __init__(self, srv=None):
         if srv==None:
@@ -61,8 +64,12 @@ class ArmPlanner:
 
         # is this a capture?
         if to != None: 
-            #self.addTransit(req, to.pose, off_board)
-            pass
+            off_board = ChessPiece()
+            off_board.header.frame_id = fr.header.frame_id
+            off_board.pose.position.x = -2 * SQUARE_SIZE
+            off_board.pose.position.y = SQUARE_SIZE
+            off_board.pose.position.z = fr.pose.position.z
+            self.addTransit(req, to.pose, off_board.pose)
         
         to = ChessPiece()
         to.header.frame_id = fr.header.frame_id
@@ -103,13 +110,13 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(5.0)
+        action.move_time = rospy.Duration(TIME_FACTOR*5.0)
         req.goals.append(action)
 
         # open gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
-        action.command = 0.05
+        action.command = GRIPPER_OPEN
         action.move_time = rospy.Duration(1.0)
         req.goals.append(action)
 
@@ -118,20 +125,20 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = fr.position.x
         action.goal.position.y = fr.position.y
-        action.goal.position.z = fr.position.z + 0.03
+        action.goal.position.z = fr.position.z + 0.02
         q = quaternion_from_euler(0.0, 1.57, 0.0, 'sxyz')
         action.goal.orientation.x = q[0]
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(5.0)
+        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
         req.goals.append(action)
 
         # close gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
-        action.command = 0.01
-        action.move_time = rospy.Duration(1.0)
+        action.command = GRIPPER_CLOSE
+        action.move_time = rospy.Duration(3.0)
         req.goals.append(action)
 
         # raise gripper
@@ -145,7 +152,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(5.0)
+        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
         req.goals.append(action)
 
         # over over goal
@@ -159,7 +166,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(5.0)
+        action.move_time = rospy.Duration(TIME_FACTOR*5.0)
         req.goals.append(action)
 
         # lower gripper
@@ -167,19 +174,19 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = to.position.x
         action.goal.position.y = to.position.y
-        action.goal.position.z = to.position.z + 0.03
+        action.goal.position.z = to.position.z + 0.04
         q = quaternion_from_euler(0.0, 1.57, 0.0, 'sxyz')
         action.goal.orientation.x = q[0]
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(5.0)
+        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
         req.goals.append(action)
         
         # open gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
-        action.command = 0.05
+        action.command = GRIPPER_OPEN
         action.move_time = rospy.Duration(1.0)
         req.goals.append(action)
         
@@ -194,6 +201,6 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(5.0)
+        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
         req.goals.append(action)
 
