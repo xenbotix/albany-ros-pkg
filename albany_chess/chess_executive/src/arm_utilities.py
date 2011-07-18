@@ -109,7 +109,7 @@ class ArmPlanner:
         # open gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
-        action.command = 0.03
+        action.command = 0.05
         action.move_time = rospy.Duration(1.0)
         req.goals.append(action)
 
@@ -118,7 +118,7 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = fr.position.x
         action.goal.position.y = fr.position.y
-        action.goal.position.z = fr.position.z + 0.01
+        action.goal.position.z = fr.position.z + 0.03
         q = quaternion_from_euler(0.0, 1.57, 0.0, 'sxyz')
         action.goal.orientation.x = q[0]
         action.goal.orientation.y = q[1]
@@ -167,7 +167,7 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = to.position.x
         action.goal.position.y = to.position.y
-        action.goal.position.z = to.position.z + 0.01
+        action.goal.position.z = to.position.z + 0.03
         q = quaternion_from_euler(0.0, 1.57, 0.0, 'sxyz')
         action.goal.orientation.x = q[0]
         action.goal.orientation.y = q[1]
@@ -179,7 +179,7 @@ class ArmPlanner:
         # open gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_GRIPPER
-        action.command = 0.03
+        action.command = 0.05
         action.move_time = rospy.Duration(1.0)
         req.goals.append(action)
         
