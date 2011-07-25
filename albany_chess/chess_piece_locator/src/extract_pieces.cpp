@@ -185,7 +185,7 @@ pcl_ros::PieceExtraction::input_indices_callback (
   else
     NODELET_DEBUG ("[%s::input_callback] PointCloud with %d data points, stamp %f, and frame %s on topic %s received.", getName ().c_str (), cloud->width * cloud->height, cloud->header.stamp.toSec (), cloud->header.frame_id.c_str (), pnh_->resolveName ("input").c_str ());
 
-  IndicesConstPtr indices_ptr;
+  IndicesPtr indices_ptr;
   if (indices)
     indices_ptr = boost::make_shared <std::vector<int> > (indices->indices);
 
