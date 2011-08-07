@@ -1,10 +1,30 @@
 #!/usr/bin/env python
 
+""" 
+  Copyright (c) 2011 Michael E. Ferguson.  All right reserved.
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software Foundation,
+  Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+"""
+
 import roslib; roslib.load_manifest('arbotix_controllers')
 import rospy
+import actionlib
 import sys
 
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from control_msgs.msg import *
 
 servos = ['arm_shoulder_pan_joint', 'arm_shoulder_lift_joint', 'arm_elbow_flex_joint', 'arm_wrist_flex_joint', 'arm_wrist_roll_joint']
 
@@ -14,11 +34,12 @@ tucked = [1.4675082870772636, -0.48576058283045309, 1.4817828305200882, 1.718058
 
 class tuck_arm:
     
-    def __init__(self, pub=None):
-        if pub != None:
-            self.pub = pub
+    def __init__(self, client=None):
+        if client != None:
+            self._client = client
         else:
-            self.pub = rospy.Publisher('arm_controller/command', JointTrajectory)
+            self._client = actionlib.SimpleActionClient('follow_joint_trajectory', FollowJointTrajectoryAction)
+        self._client.wait_for_server()
 
     def tuck(self):
         # prepare a joint trajectory
@@ -44,8 +65,12 @@ class tuck_arm:
 
         # publish
         msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
-        self.pub.publish(msg)
+        #self.pub.publish(msg)
 
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory = msg
+        self._client.send_goal(goal)
+        
     def untuck(self):
         # prepare a joint trajectory
         msg = JointTrajectory()
@@ -60,15 +85,18 @@ class tuck_arm:
 
         # publish
         msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
-        self.pub.publish(msg)
+        #self.pub.publish(msg)
+
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory = msg
+        self._client.send_goal(goal)
     
 if __name__=="__main__":
     rospy.init_node("tuck_arm")
-    pub = rospy.Publisher('arm_controller/command', JointTrajectory, latch=True)
-    tuck = tuck_arm(pub)
+    tuck = tuck_arm()
     
     # tucking or untucking?
-    if len(sys.argv) > 1 and sys.argv[1] == "u":
+    if len(sys.argv) > 1 and sys.argv[1].find("u") > -1:
         tuck.untuck()
     else:
         tuck.tuck()
