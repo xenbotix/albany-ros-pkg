@@ -7,6 +7,7 @@
   <include file="$(find chess_board_locator)/launch/run.launch" />
   <include file="$(find chess_piece_locator)/launch/run.launch" />
 
+  <node pkg="chess_executive" type="festival_launcher.py" name="launcher"/>
   <!--<node pkg="chess_executive" type="chess_executive.py" name="chess_executive" output="screen"/>-->
 
 </launch>
