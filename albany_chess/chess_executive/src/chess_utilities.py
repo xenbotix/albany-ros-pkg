@@ -267,7 +267,7 @@ class BoardState:
             self.values = temp_board.values
             self.printBoard()
 
-        self.last_move = "go"
+        self.last_move = "go"                
 
     #######################################################
     # helpers
@@ -320,6 +320,32 @@ class BoardState:
             return "k"
         return "x"
 
+    def getMoveText(self, move):
+        (col_f, rank_f) = self.toPosition(move[0:2])
+        (col_t, rank_t) = self.toPosition(move[2:])
+        piece = self.getPiece(col_f, rank_f)
+        if piece == None:
+            piece = self.getPiece(col_t, rank_t)
+            if piece == None:
+                return ""
+        text = ""
+        name = self.getPieceName(piece.type)
+        if name == "p" or name == "P":
+            text += "pawn "
+        elif name == "r" or name == "R":
+            text += "rook "
+        elif name == "n" or name == "N":
+            text += "knight "
+        elif name == "b" or name == "B":
+            text += "bishop "
+        elif name == "q" or name == "Q":
+            text += "queen "
+        elif name == "k" or name == "K":
+            text += "king "
+        text += "from " + move[0:2] + " to " + move[2:]
+        return text
+
+                
 class GnuChessEngine:
     """ Connection to a GNU chess engine. """
 
