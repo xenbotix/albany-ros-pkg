@@ -20,15 +20,18 @@
 
 import roslib; roslib.load_manifest('chess_executive')
 import rospy
+import actionlib
 import sys
 
-from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from diagnostic_msgs.msg import DiagnosticArray
 
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from control_msgs.msg import *
+
 class HeadEngine:   # a crazy name, but matches our convention
     
-    def __init__(self, publishers=None):
+    def __init__(self, client=None):
         self.joints = ["head_pan_joint", "head_tilt_joint"] 
         self.last = [None, None] 
         self.temps = [0.0, 0.0]
@@ -36,12 +39,11 @@ class HeadEngine:   # a crazy name, but matches our convention
         self.previous_pan = None
         self.iter = 0
 
-        if publishers:
-            self.publishers = publishers
+        if client != None:
+            self._client = client
         else:
-            self.publishers = list()
-            self.publishers.append(rospy.Publisher("/head_pan_joint/command", Float64))
-            self.publishers.append(rospy.Publisher("/head_tilt_joint/command", Float64))
+            self._client = actionlib.SimpleActionClient('head_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        self._client.wait_for_server()
 
         rospy.Subscriber('joint_states', JointState, self.stateCb)
         rospy.Subscriber('diagnostics', DiagnosticArray, self.diagnosticCb)
@@ -74,14 +76,54 @@ class HeadEngine:   # a crazy name, but matches our convention
     #######################################################
     # look at person/board
     def look_at_player(self):
-        self.publishers[1].publish(Float64(0.0))
+        msg = JointTrajectory()
+        msg.joint_names = self.joints
+        msg.points = list()
+    
+        point = JointTrajectoryPoint()
+        point.positions = [0.0, 0.0]
+        point.time_from_start = rospy.Duration(3.0)
+        msg.points.append(point)
+
+        msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
+
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory = msg
+        self._client.send_goal(goal)
 
     def look_at_board(self):
-        self.publishers[1].publish(Float64(self.home_tilt))
+        msg = JointTrajectory()
+        msg.joint_names = self.joints
+        msg.points = list()
+    
+        point = JointTrajectoryPoint()
+        point.positions = [0.0, self.home_tilt]
+        point.time_from_start = rospy.Duration(3.0)
+        msg.points.append(point)
+
+        msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
+
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory = msg
+        self._client.send_goal(goal)
 
     def wiggle_head(self):
         self.iter = (self.iter+1)%5
-        self.publishers[0].publish(Float64(self.home_pan+(self.iter-2)*0.05))
+
+        msg = JointTrajectory()
+        msg.joint_names = self.joints
+        msg.points = list()
+    
+        point = JointTrajectoryPoint()
+        point.positions = [self.home_pan+(self.iter-2)*0.05, self.home_tilt]
+        point.time_from_start = rospy.Duration(0.5)
+        msg.points.append(point)
+
+        msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
+
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory = msg
+        self._client.send_goal(goal)
     
 if __name__=="__main__":
     rospy.init_node("head_util_test")
