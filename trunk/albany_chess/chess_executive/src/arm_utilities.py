@@ -32,8 +32,8 @@ from chess_utilities import SQUARE_SIZE
 from tuck_arm import *
 
 TIME_FACTOR = 0.5
-GRIPPER_OPEN = 0.04 #0.05
-GRIPPER_CLOSE = 0.005
+GRIPPER_OPEN = 0.05
+GRIPPER_CLOSE = 0.0075
 
 class ArmPlanner:
     """ Connection to the arm server. """
@@ -101,15 +101,11 @@ class ArmPlanner:
     def addTransit(self, req, fr, to):
         """ Move a piece from 'fr' to 'to' """
 
-        # account for arm sag
-        x = (fr.position.x - (0.05715*4)*1.05) + (0.05715*4)
-        y = (fr.position.y * 1.1)
-
         # hover over piece
         action = ArmAction()
         action.type = ArmAction.MOVE_ARM
-        action.goal.position.x = x
-        action.goal.position.y = y
+        action.goal.position.x = fr.position.x
+        action.goal.position.y = fr.position.y
         #action.goal.position.z = fr.position.z + 0.1
         action.goal.position.z = 0.15
         q = quaternion_from_euler(0.0, 1.57, 0.0)
@@ -130,8 +126,8 @@ class ArmPlanner:
         # lower gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_ARM
-        action.goal.position.x = x
-        action.goal.position.y = y
+        action.goal.position.x = fr.position.x
+        action.goal.position.y = fr.position.y
         #action.goal.position.z = fr.position.z + 0.02
         action.goal.position.z = 0.035
         q = quaternion_from_euler(0.0, 1.57, 0.0)
@@ -152,8 +148,8 @@ class ArmPlanner:
         # raise gripper
         action = ArmAction()
         action.type = ArmAction.MOVE_ARM
-        action.goal.position.x = x
-        action.goal.position.y = y
+        action.goal.position.x = fr.position.x
+        action.goal.position.y = fr.position.y
         #action.goal.position.z = fr.position.z + 0.1
         action.goal.position.z = 0.15
         q = quaternion_from_euler(0.0, 1.57, 0.0)
@@ -169,7 +165,6 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = to.position.x
         action.goal.position.y = to.position.y
-        #action.goal.position.z = to.position.z + 0.1
         action.goal.position.z = 0.15
         q = quaternion_from_euler(0.0, 1.57, 0.0)
         action.goal.orientation.x = q[0]
@@ -184,7 +179,6 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = to.position.x
         action.goal.position.y = to.position.y
-        #action.goal.position.z = to.position.z + 0.04
         action.goal.position.z = 0.06
         q = quaternion_from_euler(0.0, 1.57, 0.0)
         action.goal.orientation.x = q[0]
@@ -206,7 +200,6 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = to.position.x
         action.goal.position.y = to.position.y
-        #action.goal.position.z = to.position.z + 0.1
         action.goal.position.z = 0.15
         q = quaternion_from_euler(0.0, 1.57, 0.0)
         action.goal.orientation.x = q[0]
