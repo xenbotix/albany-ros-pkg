@@ -19,12 +19,14 @@
 """
 
 import roslib; roslib.load_manifest('chess_executive')
+from math import sqrt
 import pexpect
 
 import tf
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 from chess_msgs.msg import *
+from geometry_msgs.msg import Pose, PoseStamped
 from simple_arm_server.msg import *
 from simple_arm_server.srv import * 
 
@@ -46,6 +48,8 @@ class ArmPlanner:
             self.move = srv
         self.tuck_server = tuck_arm()
         self.success = True
+        # setup tf for translating poses
+        self.listener = tf.TransformListener()
 
     def execute(self, move, board):
         """ Execute a move. """
@@ -74,14 +78,7 @@ class ArmPlanner:
         
         to = ChessPiece()
         to.header.frame_id = fr.header.frame_id
-        if board.side == board.WHITE:
-            to.pose.position.x = (col_t * SQUARE_SIZE) + SQUARE_SIZE/2
-            to.pose.position.y = ((rank_t-1) * SQUARE_SIZE) + SQUARE_SIZE/2
-            to.pose.position.z = fr.pose.position.z
-        else:
-            to.pose.position.x = ((7-col_t) * SQUARE_SIZE) + SQUARE_SIZE/2
-            to.pose.position.y = ((8-rank_t) * SQUARE_SIZE) + SQUARE_SIZE/2
-            to.pose.position.z = fr.pose.position.z
+        to.pose = self.getPose(col_t, rank_t, board, fr.pose.position.z)
 
         self.addTransit(req, fr.pose, to.pose)
         
@@ -128,8 +125,10 @@ class ArmPlanner:
         action.type = ArmAction.MOVE_ARM
         action.goal.position.x = fr.position.x
         action.goal.position.y = fr.position.y
-        #action.goal.position.z = fr.position.z + 0.02
-        action.goal.position.z = 0.035
+        action.goal.position.z = fr.position.z + 0.03
+        if action.goal.position.z > 0.05:
+            action.goal.position.z = 0.05
+        #action.goal.position.z = 0.05 # 0.035
         q = quaternion_from_euler(0.0, 1.57, 0.0)
         action.goal.orientation.x = q[0]
         action.goal.orientation.y = q[1]
@@ -208,4 +207,29 @@ class ArmPlanner:
         action.goal.orientation.w = q[3]
         action.move_time = rospy.Duration(TIME_FACTOR*3.0)
         req.goals.append(action)
+
+    def getPose(self, col, rank, board, z=0):
+        """ Find the reach required to get to a position """
+        p = Pose()
+        if board.side == board.WHITE:
+            p.position.x = (col * SQUARE_SIZE) + SQUARE_SIZE/2
+            p.position.y = ((rank-1) * SQUARE_SIZE) + SQUARE_SIZE/2
+            p.position.z = z
+        else:
+            p.position.x = ((7-col) * SQUARE_SIZE) + SQUARE_SIZE/2
+            p.position.y = ((8-rank) * SQUARE_SIZE) + SQUARE_SIZE/2
+            p.position.z = z
+        return p
+
+    def getReach(self, col, rank, board):
+        """ Find the reach required to get to a position """
+        ps = PoseStamped()
+        ps.header.frame_id = "chess_board"
+        ps.pose = self.getPose(board.getColIdx(col), int(rank), board)
+        pose = self.listener.transformPose("arm_link", ps)
+        x = pose.pose.position.x
+        y = pose.pose.position.y
+        reach = sqrt( (x*x) + (y*y) ) 
+        print reach
+        return reach
 
