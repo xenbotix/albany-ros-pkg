@@ -65,6 +65,16 @@ class ChessExecutive:
         self.head = HeadEngine()
         self.perception_times = list()
 
+        # maybe set side?
+        try:
+            s = rospy.get_param("side")
+            if s == "w" or s == "white":
+                self.board.side = self.board.WHITE
+            else:
+                self.board.side = self.board.BLACK
+        except:
+            rospy.loginfo("No side set, will attempt to determine")
+
         rospy.loginfo("exec: Done initializing...")
 
 
@@ -98,11 +108,14 @@ class ChessExecutive:
 
         # default board representation
         self.engine = GnuChessEngine()
-        
-        # are we white/black?
         self.board.newGame()
+        self.head.look_at_board()
+        rospy.sleep(5.0)
+
+        # are we white/black?
         self.updateBoardState(True)
-        self.board.computeSide()
+        if self.board.side == None:
+            self.board.computeSide()
 
         if self.board.side == self.board.BLACK:
             self.head.look_at_player()
@@ -120,26 +133,27 @@ class ChessExecutive:
         # loop!
         while not rospy.is_shutdown(): 
             # do move
-            move = self.engine.nextMove(self.board.last_move)
+            move = self.getMove() #engine.nextMove(self.board.last_move)
             while move == None and not rospy.is_shutdown():
                 # update board state    
                 self.board.revert()
                 rospy.loginfo("exec: Bad move, triggering again...")
                 self.updateBoardState()
-                move = self.engine.nextMove(self.board.last_move)
+                move = self.getMove() #engine.nextMove(self.board.last_move)
             # do move
             self.head.look_at_player()
             if self.board.last_move != "go":
                 self.speech.say("I see you have moved your " + self.board.getMoveText(self.board.last_move))
             rospy.loginfo("exec: My move: %s", move)
             self.speech.say("Moving my " + self.board.getMoveText(move))
-            self.head.look_at_board()
+            #self.head.look_at_board()
             self.board.applyMove(move, self.planner.execute(move,self.board))
             if not self.planner.success: 
+                self.engine.startPawning()
                 self.speech.say("Oh crap! I have failed")
 
             # wait for opponents move
-            self.head.look_at_player()
+            #self.head.look_at_player()
             self.yourMove()
             rospy.sleep(10.0)
             self.head.look_at_board()
@@ -153,7 +167,6 @@ class ChessExecutive:
         self.board.up_to_date = False
         rospy.loginfo("exec: Triggering...")
         self.trigger()
-        start_t = rospy.Time.now()
         output_t = rospy.Time.now()
         updated_t = rospy.Time.now()
         while not rospy.is_shutdown():
@@ -162,36 +175,42 @@ class ChessExecutive:
                 self.head.wiggle_head()
                 output_t = rospy.Time.now()
             if (rospy.Time.now()-updated_t).to_sec() > 5.0:
-                rospy.logerr("exec: Failed to get updates, triggering again")       
+                rospy.logerr("exec: Failed to get updates, triggering again")
                 self.trigger()
                 updated_t = rospy.Time.now()
             if self.board.up_to_date:
                 if self.board.last_move == "fail":
                     self.board.up_to_date = False 
-                    rospy.loginfo("exec: Triggering again...")   
+                    rospy.loginfo("exec: Triggering again...")
                     self.trigger()
                 elif self.board.last_move == "none":
                     if acceptNone:
                         break
                     else:
                         self.board.up_to_date = False 
-                        rospy.loginfo("exec: Triggering again...")   
+                        rospy.loginfo("exec: Triggering again...")
                         self.trigger()
                 else:
                     if acceptNone:
                         self.board.up_to_date = False 
-                        rospy.loginfo("exec: Triggering again...")   
+                        rospy.loginfo("exec: Triggering again...")
                         self.trigger()
                     else:
                         break
                 updated_t = rospy.Time.now()
             rospy.sleep(0.1)
-        t = (rospy.Time.now() - start_t).to_sec()       
-        self.perception_times.append(t)
-        rospy.loginfo("Perception time: " + str(t))
-        rospy.loginfo("Avg. time: " + str(sum(self.perception_times)/len(self.perception_times)) )
         self.board.printBoard()
 
+    def getMove(self):
+        move = self.engine.nextMove(self.board.last_move, self.board)
+        # check length of move
+        if move != None:
+            reach = self.planner.getReach(move[2], move[3], self.board) 
+            if reach > 0.45:
+                rospy.loginfo("Move " + move + " has reach of " + str(reach) + ", starting to pawn")
+                self.engine.startPawning()
+                return self.engine.nextMove(self.board.last_move, self.board)            
+        return move
 
 if __name__=="__main__":
     try:
@@ -199,6 +218,7 @@ if __name__=="__main__":
         executive.playGame()
         print "Final board state:"
         executive.board.printBoard()
+        executive.head.look_at_board()
         # shutdown gnuchess, so it doesn't shut us down
         executive.engine.exit()
     except KeyboardInterrupt:
