@@ -41,6 +41,7 @@ class BoardState:
         self.up_to_date = True
         self.max_changes = 2
         self.output = False
+        self.castling_move = None
 
     def newGame(self):
         """ 
@@ -128,11 +129,13 @@ class BoardState:
                 print ""
 
     def applyUpdate(self, message):
-        """ Update the board state, given a new ChessBoard message. """
-        piece_fr  = None   # location moved from
-        piece_to  = None   # location moved to
-        piece_cnt = 0      # number of pieces moved
-        piece_change = 0   # number of pieces changed color
+        """ 
+        Update the board state, given a new ChessBoard message.
+        """
+        piece_gone  = list()    # locations moved from
+        piece_new   = list()    # locations moved to
+        piece_color = list()    # locations that have changed color
+
         # process ChessBoard message  
         temp_board = BoardState(self.side)  
         for piece in message.pieces:
@@ -149,16 +152,10 @@ class BoardState:
             if temp_board.getPiece(col, rank) == None:
                 p = self.getPiece(col, rank)
                 if p == None and not self.side == None:
-                    piece_cnt = piece_cnt + 1
-                    if piece_to == None:
-                        piece_to = [col, rank, piece] 
+                    piece_new.append([col, rank, piece]) 
                     rospy.logdebug("Piece moved to: %s%s" % (col,str(rank)))
-#               else:
-#                   piece.type = p.type
                 temp_board.setPiece(col, rank, piece)
-#           else:
-#               rospy.logerr("Duplicate piece! %s" % self.toString(col, rank))  
-#               pass          
+
         # see how board has changed
         for col in 'abcdefgh':
             for rank in [1,2,3,4,5,6,7,8]:
@@ -166,52 +163,84 @@ class BoardState:
                 new = temp_board.getPiece(col,rank)                    
                 if new == None and old != None:
                     # this piece is gone!
-                    piece_cnt = piece_cnt + 1
-                    piece_fr = [col, rank, old]
+                    piece_gone.append([col, rank, old])
                     rospy.logdebug("Piece moved from: %s%s" % (col,str(rank)))
                 elif old != None and new != None and new.type/abs(float(new.type)) != old.type/abs(float(old.type)):
                     # capture!
-                    piece_cnt = piece_cnt + 1
-                    piece_change = piece_change + 1
-                    piece_to = [col, rank, new]
+                    piece_color.append([col, rank, new])
                     rospy.logdebug("Piece captured: %s%s" % (col,str(rank))) 
                 elif old != None and new != None:
                     # boring, but update types!
                     new.type = old.type
                     temp_board.setPiece(col,rank,new)
-        # update types
-        if piece_to != None and piece_fr != None:
-            fr = self.getPiece(piece_fr[0], piece_fr[1])
-            to = temp_board.getPiece(piece_to[0], piece_to[1])
-            to.type = fr.type
-            temp_board.setPiece(piece_to[0],piece_to[1],to)
+
+        # plausibility test: there can only be one change or new piece
+        if self.side == None:
+            if len(piece_color) + len(piece_new) == 0 and len(piece_gone) == 0:
+                rospy.loginfo("No side set, but we are probably white.")
+                self.last_move = "none"
+                self.values = temp_board.values
+                self.up_to_date = True
+                return
+            elif len(piece_color) >= 32 and len(piece_new) == 0:
+                rospy.loginfo("No side set, but we are probably black.")
+                self.last_move = "none"
+                self.values = temp_board.values
+                self.up_to_date = True
+                return
+            else:
+                rospy.logdebug("Try again, %d" % (len(piece_new) + len(piece_color)))        
+                self.last_move = "fail"
+                self.up_to_date = True
+                return
+        elif len(piece_new) + len(piece_color) != 1:
+            # castling
+            #self.castling_move = self.isCastling(piece_new, piece_color, piece_gone)
+            #if self.castling_move != None:
+            #    # castling
+            #    rospy.loginfo("Castling, %s" % self.castling_move)
+            #    self.last_move = self.castling_move
+            #    self.up_to_date = True
+            rospy.logdebug("Try again, %d" % (len(piece_new) + len(piece_color))) 
+            self.last_move = "fail"
+            self.up_to_date = True
+            return
+
+        # if our pieces are missing, fill them in (bishops!)
+        candidates = list()
+        for entry in piece_gone:
+            (col, rank, piece) = entry
+            if piece.type/abs(piece.type) == self.side:
+                # fill in
+                temp_board.setPiece(col, rank, self.getPiece(col,rank))
+            else:
+                candidates.append(entry)
+        if len(candidates) == 0:
+            rospy.logdebug("Try again, no candidates")        
+            self.last_move = "fail"
+            self.up_to_date = True
+            return
+        #rospy.loginfo(candidates)
+        
+        # find the corresponding piece
+        if len(piece_new) == 1:
+            piece_to = piece_new[0]
+        else:
+            piece_to = piece_color[0]
+        piece_fr = candidates[0]
+        # update type
+        fr = self.getPiece(piece_fr[0], piece_fr[1])
+        to = temp_board.getPiece(piece_to[0], piece_to[1])
+        to.type = fr.type
+        temp_board.setPiece(piece_to[0],piece_to[1],to)
+               
+        # set outputs
         if self.output: 
             temp_board.printBoard()
             self.output = False
-        # is this plausible?
-        if self.side == None:
-            if piece_cnt == 0 or piece_cnt >= 32:
-                rospy.loginfo("No side set, done") 
-                self.last_move = "none"
-                self.values = temp_board.values
-            else:
-                rospy.logdebug("Try again, %d" % piece_cnt)        
-                self.last_move = "fail"
-        elif piece_cnt > self.max_changes:
-            rospy.logdebug("Try again, %d" % piece_cnt)        
-            self.last_move = "fail"
-        else:
-            try:
-                self.previous = [self.values, self.last_move] 
-                self.last_move = piece_fr[0] + str(piece_fr[1]) + piece_to[0] + str(piece_to[1])
-                self.values = temp_board.values
-            except:
-                if piece_fr == None and piece_to == None:
-                    rospy.logdebug("No change")
-                    self.last_move = "none"
-                else:
-                    rospy.logdebug("Try again, from or to not set")             
-                    self.last_move = "fail"    
+        self.previous = [self.values, self.last_move] 
+        self.last_move = piece_fr[0] + str(piece_fr[1]) + piece_to[0] + str(piece_to[1])
+        self.values = temp_board.values
         self.up_to_date = True
 
     def revert(self):
@@ -345,6 +374,42 @@ class BoardState:
         text += "from " + move[0:2] + " to " + move[2:]
         return text
 
+    def isCastling(self, piece_new, piece_color, piece_gone):
+        """ 
+        Are we castling? Returns one of:
+            e1c1 - (also, rook a1d1)
+            e1g1 - (also, rook h1f1)
+            e8c8 - (also, rook a8d8)
+            e8g8 - (also, rook h8f8)  
+        """
+        if len(piece_color) > 0 or len(piece_new) != 2 or len(piece_gone) != 2:
+            return None
+        if piece_new[0][1] == 1 and piece_new[1][1] == 1 and piece_gone[0][1] == 1 and piece_gone[1][1] == 1:
+            # possibly white castling?
+            if piece_new[0][0] == "c" and piece_new[1][0] == "d" and piece_gone[0][0] == "a" and piece_gone[1][0] == "e":
+                return "e1c1"
+            elif piece_new[1][0] == "c" and piece_new[0][0] == "d" and piece_gone[1][0] == "a" and piece_gone[0][0] == "e":
+                return "e1c1"
+            elif piece_new[0][0] == "g" and piece_new[1][0] == "f" and piece_gone[0][0] == "h" and piece_gone[1][0] == "e":
+                return "e1g1"
+            elif piece_new[1][0] == "g" and piece_new[0][0] == "f" and piece_gone[1][0] == "h" and piece_gone[0][0] == "e":
+                return "e1g1"
+            else:
+                return None
+        elif piece_new[0][1] == 8 and piece_new[1][1] == 8 and piece_gone[0][1] == 8 and piece_gone[1][1] == 8:
+            # possibly black castling?
+            if piece_new[0][0] == "c" and piece_new[1][0] == "d" and piece_gone[0][0] == "a" and piece_gone[1][0] == "e":
+                return "e8c8"
+            elif piece_new[1][0] == "c" and piece_new[0][0] == "d" and piece_gone[1][0] == "a" and piece_gone[0][0] == "e":
+                return "e8c8"
+            elif piece_new[0][0] == "g" and piece_new[1][0] == "f" and piece_gone[0][0] == "h" and piece_gone[1][0] == "e":
+                return "e8g8"
+            elif piece_new[1][0] == "g" and piece_new[0][0] == "f" and piece_gone[1][0] == "h" and piece_gone[0][0] == "e":
+                return "e8g8"
+            else:
+                return None
+        else:
+            return None
                 
 class GnuChessEngine:
     """ Connection to a GNU chess engine. """
@@ -354,25 +419,44 @@ class GnuChessEngine:
         Start a connection to GNU chess.
         """ 
         self.engine = pexpect.spawn('/usr/games/gnuchess -x')
-        self.history = list()  
+        self.history = list()
+        self.pawning = False
 
     def startNewGame(self):
         self.engine.sendline('new')
         self.history = list()
 
-    def nextMove(self, move="go"):
+    def nextMove(self, move="go", board=None):
         """
         Give opponent's move, get back move to make. 
             returns None if given an invalid move.
         """
-        self.engine.sendline(move)        
-        if self.engine.expect(['My move is','Illegal move']) == 1:
-            return None     
-        self.engine.expect('([a-h][1-8][a-h][1-8][RrNnBbQq(\r\n)])')
-        m = self.engine.after.rstrip()
+        # get move
+        if self.pawning:
+            while not rospy.is_shutdown():
+                for row in [2,3,4,5]:
+                    for col in ['a','b','c','d','e','f','g','h']:
+                        p1 = board.getPiece(col,row)
+                        if p1 != None and abs(p1.type) == ChessPiece.WHITE_PAWN:
+                            p2 = board.getPiece(col,row+1)
+                            if p2 == None:
+                                # this is a candidate   
+                                m = col + str(row) + col + str(row+1)
+                                self.history.append(m)
+                                return m
+        else:
+            self.engine.sendline(move)        
+            if self.engine.expect(['My move is','Illegal move']) == 1:
+                return None     
+            self.engine.expect('([a-h][1-8][a-h][1-8][RrNnBbQq(\r\n)])')
+            m = self.engine.after.rstrip()
         self.history.append(m)
-        #rospy.loginfo(str(self.engine))
         return m
+
+    def startPawning(self):
+        self.history = self.history[0:-1]
+        self.pawning = True
+        self.history.append("Now pawning.")
 
     def exit(self):
         print "game review:"
