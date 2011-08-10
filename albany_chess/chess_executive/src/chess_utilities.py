@@ -216,11 +216,15 @@ class BoardState:
             else:
                 candidates.append(entry)
         if len(candidates) == 0:
-            rospy.logdebug("Try again, no candidates")        
+            rospy.loginfo("Try again, no candidates")        
             self.last_move = "fail"
             self.up_to_date = True
             return
-        #rospy.loginfo(candidates)
+        if len(candidates) > 1: # too many possibilities (added 3AM on Wednesday!)
+            rospy.loginfo("Try again, too many candidates %d" % len(candidates))        
+            self.last_move = "fail"
+            self.up_to_date = True
+            return
         
         # find the corresponding piece
         if len(piece_new) == 1:
