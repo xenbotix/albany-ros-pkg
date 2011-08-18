@@ -37,6 +37,7 @@ class ChessExecutive:
     def __init__(self):
         """ Start the executive node """
         rospy.init_node("chess_executive")
+        self.interactive = False
 
         # connect to camera_turnpike service
         rospy.loginfo('exec: Waiting for /camera_turnpike/trigger')
@@ -133,19 +134,22 @@ class ChessExecutive:
         # loop!
         while not rospy.is_shutdown(): 
             # do move
-            move = self.getMove() #engine.nextMove(self.board.last_move)
+            move = self.getMove()
             while move == None and not rospy.is_shutdown():
                 # update board state    
                 self.board.revert()
                 rospy.loginfo("exec: Bad move, triggering again...")
                 self.updateBoardState()
-                move = self.getMove() #engine.nextMove(self.board.last_move)
+                move = self.getMove()
             # do move
             self.head.look_at_player()
             if self.board.last_move != "go":
                 self.speech.say("I see you have moved your " + self.board.getMoveText(self.board.last_move))
             rospy.loginfo("exec: My move: %s", move)
-            self.speech.say("Moving my " + self.board.getMoveText(move))
+            if move in castling_extras.keys():
+                self.speech.say("Why oh why am I castling?")
+            else:
+                self.speech.say("Moving my " + self.board.getMoveText(move))
             #self.head.look_at_board()
             self.board.applyMove(move, self.planner.execute(move,self.board))
             if not self.planner.success: 
@@ -205,8 +209,22 @@ class ChessExecutive:
         move = self.engine.nextMove(self.board.last_move, self.board)
         # check length of move
         if move != None:
+            if move in castling_extras.keys():
+                # asked to castle!
+                m = castling_extras[move]
+                reach = self.planner.getReach(m[0], m[1], self.board) 
+                if reach > 0.45 and not self.interactive:
+                    rospy.loginfo("Move " + m + ", source has reach of " + str(reach) + ", starting to pawn")
+                    self.engine.startPawning()
+                    return self.engine.nextMove(self.board.last_move, self.board)        
+                reach = self.planner.getReach(m[2], m[3], self.board) 
+                if reach > 0.45 and not self.interactive:
+                    rospy.loginfo("Move " + m + ", destination has reach of " + str(reach) + ", starting to pawn")
+                    self.engine.startPawning()
+                    return self.engine.nextMove(self.board.last_move, self.board)   
+
             reach = self.planner.getReach(move[2], move[3], self.board) 
-            if reach > 0.45:
+            if reach > 0.45 and not self.interactive:
                 rospy.loginfo("Move " + move + " has reach of " + str(reach) + ", starting to pawn")
                 self.engine.startPawning()
                 return self.engine.nextMove(self.board.last_move, self.board)            
