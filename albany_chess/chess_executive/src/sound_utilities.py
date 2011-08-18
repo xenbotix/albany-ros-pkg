@@ -87,5 +87,6 @@ if __name__ == "__main__":
     #    print "hello"
     #    time.sleep(1)
     se = SpeechEngine()
-    se.say("Moving knight from e6 to d4")
+    #se.say("Moving knight from e6 to d4")
+    se.say("ha ha ha")
 

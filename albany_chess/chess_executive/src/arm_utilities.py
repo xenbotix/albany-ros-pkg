@@ -30,7 +30,7 @@ from geometry_msgs.msg import Pose, PoseStamped
 from simple_arm_server.msg import *
 from simple_arm_server.srv import * 
 
-from chess_utilities import SQUARE_SIZE
+from chess_utilities import SQUARE_SIZE, castling_extras
 from tuck_arm import *
 
 TIME_FACTOR = 0.5
@@ -51,7 +51,7 @@ class ArmPlanner:
         # setup tf for translating poses
         self.listener = tf.TransformListener()
 
-    def execute(self, move, board):
+    def execute(self, move, board, nested=False):
         """ Execute a move. """
 
         # untuck arm
@@ -89,9 +89,13 @@ class ArmPlanner:
         except rospy.ServiceException, e:
             print "Service did not process request: %s"%str(e)
 
-        # tuck arm
-        self.tuck_server.tuck()
-        rospy.sleep(5.0)
+        if move in castling_extras:
+            self.execute(castling_extras[move],board)
+
+        if not nested:
+            # tuck arm
+            self.tuck_server.tuck()
+            rospy.sleep(5.0)
         return to.pose
 
 
