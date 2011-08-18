@@ -26,6 +26,12 @@ from chess_msgs.msg import *
 
 SQUARE_SIZE = 0.05715
 
+# extra move to be made for castling
+castling_extras = { "e1c1" : "a1d1",
+                    "e1g1" : "h1f1", 
+                    "e8c8" : "a8d8",
+                    "e8g8" : "h8f8" }
+
 class BoardState:
     """ A representation of a chess board state. """
     WHITE = 1
@@ -92,8 +98,9 @@ class BoardState:
         Rank:   1 = rank 1
         """
         try:
-            self.values[int(rank-1)*8+self.getColIdx(column)] = piece
+            self.values[int(int(rank)-1)*8+self.getColIdx(column)] = piece
         except:
+            print column, rank
             rospy.loginfo("setPiece: invalid row/column")
         
     def getPiece(self, column, rank):
@@ -176,6 +183,8 @@ class BoardState:
 
         # plausibility test: there can only be one change or new piece
         if self.side == None:
+
+            temp_board.printBoard()
             if len(piece_color) + len(piece_new) == 0 and len(piece_gone) == 0:
                 rospy.loginfo("No side set, but we are probably white.")
                 self.last_move = "none"
@@ -195,12 +204,29 @@ class BoardState:
                 return
         elif len(piece_new) + len(piece_color) != 1:
             # castling
-            #self.castling_move = self.isCastling(piece_new, piece_color, piece_gone)
-            #if self.castling_move != None:
-            #    # castling
-            #    rospy.loginfo("Castling, %s" % self.castling_move)
-            #    self.last_move = self.castling_move
-            #    self.up_to_date = True
+            self.castling_move = self.isCastling(piece_new, piece_color, piece_gone)
+            if self.castling_move != None:
+                # castling
+                rospy.loginfo("Castling, %s" % self.castling_move)
+
+                m = self.castling_move
+                print m
+                #self.copyType(m[0], m[1], m[2], m[3], temp_board)
+                to = ChessPiece()
+                to.type = self.side * ChessPiece.BLACK_KING
+                temp_board.setPiece(m[2],int(m[3]),to)
+
+                m = castling_extras[m]
+                print m
+                #self.copyType(m[0], m[1], m[2], m[3], temp_board)
+                to = ChessPiece()
+                to.type = self.side * ChessPiece.BLACK_ROOK
+                temp_board.setPiece(m[2],int(m[3]),to)
+                self.previous = [self.values, self.last_move] 
+                self.last_move = self.castling_move
+                self.values = temp_board.values
+                self.up_to_date = True
+                return
             rospy.logdebug("Try again, %d" % (len(piece_new) + len(piece_color))) 
             self.last_move = "fail"
             self.up_to_date = True
@@ -233,13 +259,10 @@ class BoardState:
             piece_to = piece_color[0]
         piece_fr = candidates[0]
         # update type
-        fr = self.getPiece(piece_fr[0], piece_fr[1])
-        to = temp_board.getPiece(piece_to[0], piece_to[1])
-        to.type = fr.type
-        temp_board.setPiece(piece_to[0],piece_to[1],to)
+        self.copyType(piece_fr[0], piece_fr[1], piece_to[0], piece_to[1], temp_board)
                
         # set outputs
-        if self.output: 
+        if True: #self.output: 
             temp_board.printBoard()
             self.output = False
         self.previous = [self.values, self.last_move] 
@@ -251,6 +274,12 @@ class BoardState:
         self.values = self.previous[0]
         self.last_move = self.previous[1]
 
+    def copyType(self, col_f, row_f, col_t, row_t, board):
+        fr = self.getPiece(col_f, row_f)
+        to = board.getPiece(col_t, row_t)
+        to.type = fr.type
+        board.setPiece(col_t,row_t,to)
+
     def applyMove(self, move, pose=None):
         """ Update the board state, given a move from GNU chess. """
         (col_f, rank_f) = self.toPosition(move[0:2])
@@ -258,7 +287,9 @@ class BoardState:
         piece = self.getPiece(col_f, rank_f)
         piece.pose = pose
         self.setPiece(col_t, rank_t, piece) 
-        self.setPiece(col_f, rank_f, None)       
+        self.setPiece(col_f, rank_f, None)
+        if move in castling_extras.keys():
+            self.applyMove(castling_extras[move])    
 
     def computeSide(self):
         """ Determine which side of the board we are on. """
@@ -425,12 +456,14 @@ class GnuChessEngine:
         self.engine = pexpect.spawn('/usr/games/gnuchess -x')
         self.history = list()
         self.pawning = False
+        #self.nextMove = self.nextMoveUser
+        self.nextMove = self.nextMoveGNU
 
     def startNewGame(self):
         self.engine.sendline('new')
         self.history = list()
 
-    def nextMove(self, move="go", board=None):
+    def nextMoveGNU(self, move="go", board=None):
         """
         Give opponent's move, get back move to make. 
             returns None if given an invalid move.
@@ -456,6 +489,10 @@ class GnuChessEngine:
             m = self.engine.after.rstrip()
         self.history.append(m)
         return m
+
+    def nextMoveUser(self, move="go", board=None):
+        print "Please enter a move"
+        return raw_input().rstrip()
 
     def startPawning(self):
         self.history = self.history[0:-1]
