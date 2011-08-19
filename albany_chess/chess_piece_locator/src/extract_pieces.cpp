@@ -155,14 +155,14 @@ pcl_ros::PieceExtraction::config_callback (PieceExtractionConfig &config, uint32
 //////////////////////////////////////////////////////////////////////////////////////////////
 void
 pcl_ros::PieceExtraction::input_indices_callback (
-      const PointCloudConstPtr &cloud, const PointIndicesConstPtr &indices)
+      const PointCloudConstPtr &cloud_transformed, const PointIndicesConstPtr &indices)
 {
   // No subscribers, no work
   if (pub_output_.getNumSubscribers () <= 0)
     return;
 
   // If cloud is given, check if it's valid
-  if (!isValid (cloud))
+  if (!isValid (cloud_transformed))
   {
     NODELET_ERROR ("[%s::input_indices_callback] Invalid input!", getName ().c_str ());
     return;
@@ -174,29 +174,19 @@ pcl_ros::PieceExtraction::input_indices_callback (
     return;
   }
 
-  /// DEBUG
-  if (indices)
-    NODELET_DEBUG ("[%s::input_indices_callback]\n"
-                   "                                 - PointCloud with %d data points (%s), stamp %f, and frame %s on topic %s received.\n"
-                   "                                 - PointIndices with %zu values, stamp %f, and frame %s on topic %s received.",
-                   getName ().c_str (),
-                   cloud->width * cloud->height, pcl::getFieldsList (*cloud).c_str (), cloud->header.stamp.toSec (), cloud->header.frame_id.c_str (), pnh_->resolveName ("input").c_str (),
-                   indices->indices.size (), indices->header.stamp.toSec (), indices->header.frame_id.c_str (), pnh_->resolveName ("indices").c_str ());
-  else
-    NODELET_DEBUG ("[%s::input_callback] PointCloud with %d data points, stamp %f, and frame %s on topic %s received.", getName ().c_str (), cloud->width * cloud->height, cloud->header.stamp.toSec (), cloud->header.frame_id.c_str (), pnh_->resolveName ("input").c_str ());
-
   IndicesPtr indices_ptr;
   if (indices)
     indices_ptr = boost::make_shared <std::vector<int> > (indices->indices);
 
-  PointCloud cloud_transformed;
-  if (!pcl_ros::transformPointCloud (std::string("chess_board"), *cloud, cloud_transformed, tf_listener_))
-  {
-    NODELET_ERROR ("[%s::computePublish] Error converting output dataset from to chess_board", getName().c_str () );
-    return;
-  }
+  
+//  PointCloud cloud_transformed;
+//  if (!pcl_ros::transformPointCloud (std::string("chess_board"), *cloud, cloud_transformed, tf_listener_))
+//  {
+//    NODELET_ERROR ("[%s::computePublish] Error converting output dataset from to chess_board", getName().c_str () );
+//    return;
+//  }
 
-  impl_.setInputCloud (cloud_transformed.makeShared());
+  impl_.setInputCloud (cloud_transformed->makeShared());
   impl_.setIndices (indices_ptr);
 
   std::vector<PointIndices> clusters;
@@ -207,17 +197,18 @@ pcl_ros::PieceExtraction::input_indices_callback (
   for (size_t c = 0; c < clusters.size (); ++c)
   {
     chess_msgs::ChessPiece p;
-    p.header.frame_id = cloud_transformed.header.frame_id;
+    p.header.frame_id = cloud_transformed->header.frame_id;
+    p.header.stamp = ros::Time::now();
     
     // find cluster centroid/color
     float x = 0; float y = 0; float z = 0; int color = 0;
     for (size_t i = 0; i < clusters[c].indices.size(); i++)
     {
         int j = clusters[c].indices[i];
-        x += cloud_transformed.points[j].x;
-        y += cloud_transformed.points[j].y;
-        z += cloud_transformed.points[j].z;
-        unsigned char * rgb = (unsigned char *) &(cloud_transformed.points[j].rgb);
+        x += cloud_transformed->points[j].x;
+        y += cloud_transformed->points[j].y;
+        z += cloud_transformed->points[j].z;
+        unsigned char * rgb = (unsigned char *) &(cloud_transformed->points[j].rgb);
         color += (rgb[0] + rgb[1] + rgb[2])/3;
     }
     x = x/clusters[c].indices.size();
