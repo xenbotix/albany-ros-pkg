@@ -33,14 +33,13 @@ from simple_arm_server.srv import *
 from chess_utilities import SQUARE_SIZE, castling_extras
 from tuck_arm import *
 
-TIME_FACTOR = 0.5
 GRIPPER_OPEN = 0.05
 GRIPPER_CLOSE = 0.0075
 
 class ArmPlanner:
     """ Connection to the arm server. """
     
-    def __init__(self, srv=None):
+    def __init__(self, srv=None, listener=None):
         if srv==None:
             rospy.wait_for_service('simple_arm_server/move')
             self.move = rospy.ServiceProxy('simple_arm_server/move', MoveArm) 
@@ -49,14 +48,14 @@ class ArmPlanner:
         self.tuck_server = tuck_arm()
         self.success = True
         # setup tf for translating poses
-        self.listener = tf.TransformListener()
+        self.listener = listener
 
     def execute(self, move, board, nested=False):
         """ Execute a move. """
 
         # untuck arm
         self.tuck_server.untuck()
-        rospy.sleep(3)
+        rospy.sleep(3.0)
 
         # get info about move        
         (col_f, rank_f) = board.toPosition(move[0:2])
@@ -114,7 +113,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(TIME_FACTOR*5.0)
+        action.move_time = rospy.Duration(2.5)
         req.goals.append(action)
 
         # open gripper
@@ -138,7 +137,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
+        action.move_time = rospy.Duration(1.5)
         req.goals.append(action)
 
         # close gripper
@@ -160,7 +159,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
+        action.move_time = rospy.Duration(1.0)
         req.goals.append(action)
 
         # over over goal
@@ -174,7 +173,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(TIME_FACTOR*5.0)
+        action.move_time = rospy.Duration(2.5)
         req.goals.append(action)
 
         # lower gripper
@@ -188,7 +187,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
+        action.move_time = rospy.Duration(1.5)
         req.goals.append(action)
         
         # open gripper
@@ -209,7 +208,7 @@ class ArmPlanner:
         action.goal.orientation.y = q[1]
         action.goal.orientation.z = q[2]
         action.goal.orientation.w = q[3]
-        action.move_time = rospy.Duration(TIME_FACTOR*3.0)
+        action.move_time = rospy.Duration(1.0)
         req.goals.append(action)
 
     def getPose(self, col, rank, board, z=0):

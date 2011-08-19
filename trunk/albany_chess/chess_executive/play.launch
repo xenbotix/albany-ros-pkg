@@ -4,7 +4,7 @@
   <!-- also run maxwell_defs bringup.launch -->
   <include file="$(find maxwell_defs)/launch/simple_arm_server.launch" />
 
-  <include file="$(find chess_board_locator)/launch/run.launch" />
+  <node pkg="chess_board_locator" type="chess_board_locator" name="chess_board_locator"/>
   <include file="$(find chess_piece_locator)/launch/run.launch" />
 
   <node pkg="chess_executive" type="festival_launcher.py" name="launcher"/>
