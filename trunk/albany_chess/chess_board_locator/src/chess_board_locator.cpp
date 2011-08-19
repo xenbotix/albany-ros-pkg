@@ -146,7 +146,7 @@ class ChessBoardLocator
         pub_ = it.advertise("image",1);
 
         // subscribe to just the cloud now
-        cloud_sub_ = nh_.subscribe("/camera/rgb/points", 1, &ChessBoardLocator::cameraCallback, this);
+        cloud_sub_ = nh_.subscribe("/camera/depth_registered/points", 1, &ChessBoardLocator::cameraCallback, this);
         cloud_pub_ = nh_.advertise< pcl::PointCloud<point> >("cloud", 1);
         
         // initialize dynamic reconfigure
