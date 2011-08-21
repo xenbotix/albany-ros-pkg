@@ -1,7 +1,7 @@
 all: installed
 
 SVN_DIR = build/coreslam-svn
-SVN_URL = http://openslam.informatik.uni-freiburg.de/data/svn/coreslam/trunk/
+SVN_URL = https://openslam.informatik.uni-freiburg.de/data/svn/tinyslam/trunk/
 SVN_PATCH = coreslam.patch
 SVN_REVISION = -N -r 12
 include $(shell rospack find mk)/svn_checkout.mk
