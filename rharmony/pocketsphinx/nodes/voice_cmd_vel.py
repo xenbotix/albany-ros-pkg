@@ -24,7 +24,10 @@ class voice_cmd_vel:
         self.pub_ = rospy.Publisher('cmd_vel', Twist)
         rospy.Subscriber('recognizer/output', String, self.speechCb)
 
-        rospy.spin()
+        r = rospy.Rate(10.0)
+        while not rospy.is_shutdown():
+            self.pub_.publish(self.msg)
+            r.sleep()
         
     def speechCb(self, msg):
         rospy.loginfo(msg.data)
