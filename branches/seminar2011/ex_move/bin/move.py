@@ -20,10 +20,7 @@ def cleanup():
     """ You should put comments like this inside each function. 
         This function is called when the node shuts down -- it stops the robot. """
     global p
-    twist = Twist()
-    twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0;            
-    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = r_angle;
-    p.publish(twist)
+    p.publish(Twist())
 
 
 # this quick check means that the following code runs ONLY if this is the 
