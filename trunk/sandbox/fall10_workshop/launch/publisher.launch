@@ -1,6 +1,0 @@
-<launch>
-	<node pkg='fall10workshop' 
-			type='listener.py' name='listener' >
-       <param name='test' value='value' />
-    </node>
-</launch>
