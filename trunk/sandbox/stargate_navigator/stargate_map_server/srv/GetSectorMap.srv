@@ -1,4 +1,0 @@
-# Sector we want map of
-std_msgs/String sector
----
-Gateway[] gateways
