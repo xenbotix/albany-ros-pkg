@@ -118,6 +118,7 @@ class xv11():
         self.port = serial.Serial(port,115200)
         # Storage for motor and sensor information
         self.state = {"LeftWheel_PositionInMM": 0, "RightWheel_PositionInMM": 0}
+        self.stop_state = True
         # turn things on
         self.setTestMode("on")
         self.setLDS("on")
@@ -169,6 +170,20 @@ class xv11():
         
     def setMotors(self, l, r, s):
         """ Set motors, distance left & right + speed """
+        #This is a work-around for a bug in the Neato API. The bug is that the
+        #robot won't stop instantly if a 0-velocity command is sent - the robot
+        #could continue moving for up to a second. To work around this bug, the
+        #first time a 0-velocity is sent in, a velocity of 1,1,1 is sent. Then, 
+        #the zero is sent. This effectively causes the robot to stop instantly.
+        if (int(l) == 0 and int(r) == 0 and int(s) == 0):
+            if (not self.stop_state):
+                self.stop_state = True
+            l = 1
+            r = 1
+            s = 1
+        else:
+            self.stop_state = False
+
         self.port.write("setmotor "+str(int(l))+" "+str(int(r))+" "+str(int(s))+"\n")
 
     def getMotors(self):
