@@ -1,5 +1,5 @@
 #!/usr/bin/env python
- 
+
 # Generic driver for the Neato XV-11 Robot Vacuum
 # Copyright (c) 2010 University at Albany. All right reserved.
 #
@@ -10,10 +10,10 @@
 #     * Redistributions in binary form must reproduce the above copyright
 #       notice, this list of conditions and the following disclaimer in the
 #       documentation and/or other materials provided with the distribution.
-#     * Neither the name of the University at Albany nor the names of its 
-#       contributors may be used to endorse or promote products derived 
+#     * Neither the name of the University at Albany nor the names of its
+#       contributors may be used to endorse or promote products derived
 #       from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -110,7 +110,7 @@ xv11_charger_info = [ "FuelPercent",
                 "VBattV",
                 "VExtV",
                 "Charger_mAH",
-                "MaxPWM" ] 
+                "MaxPWM" ]
 
 class xv11():
 
@@ -147,7 +147,7 @@ class xv11():
             line = self.port.readline()
         except:
             return []
-        while line.split(",")[0] != "AngleInDegrees": 
+        while line.split(",")[0] != "AngleInDegrees":
             try:
                 line = self.port.readline()
             except:
@@ -167,7 +167,7 @@ class xv11():
                 ranges.append(0)
             angle += 1
         return ranges
-        
+
     def setMotors(self, l, r, s):
         """ Set motors, distance left & right + speed """
         #This is a work-around for a bug in the Neato API. The bug is that the
@@ -192,7 +192,7 @@ class xv11():
         self.port.flushInput()
         self.port.write("getmotors\n")
         line = self.port.readline()
-        while line.split(",")[0] != "Parameter": 
+        while line.split(",")[0] != "Parameter":
             try:
                 line = self.port.readline()
             except:
@@ -205,11 +205,11 @@ class xv11():
                 pass
         return [self.state["LeftWheel_PositionInMM"],self.state["RightWheel_PositionInMM"]]
 
-    def getAnalogSensors(self):   
+    def getAnalogSensors(self):
         """ Update values for analog sensors in the self.state dictionary. """
         self.port.write("getanalogsensors\n")
         line = self.port.readline()
-        while line.split(",")[0] != "SensorName": 
+        while line.split(",")[0] != "SensorName":
             try:
                 line = self.port.readline()
             except:
@@ -221,11 +221,11 @@ class xv11():
             except:
                 pass
 
-    def getDigitalSensors(self):   
+    def getDigitalSensors(self):
         """ Update values for digital sensors in the self.state dictionary. """
         self.port.write("getdigitalsensors\n")
         line = self.port.readline()
-        while line.split(",")[0] != "Digital Sensor Name": 
+        while line.split(",")[0] != "Digital Sensor Name":
             try:
                 line = self.port.readline()
             except:
@@ -241,7 +241,7 @@ class xv11():
         """ Update values for charger/battery related info in self.state dictionary. """
         self.port.write("getcharger\n")
         line = self.port.readline()
-        while line.split(",")[0] != "Label": 
+        while line.split(",")[0] != "Label":
             line = self.port.readline()
         for i in range(len(xv11_charger_info)):
             values = self.port.readline().split(",")
@@ -252,7 +252,7 @@ class xv11():
 
     def setBacklight(self, value):
         if value > 0:
-            self.port.write("setled backlighton") 
+            self.port.write("setled backlighton")
         else:
             self.port.write("setled backlightoff")
 
