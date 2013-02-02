@@ -1,6 +1,0 @@
-<launch>
-  <param name="use_sim_time" value="false"/>
-
-  <node name="rosalyn_base" pkg="irobot_create_2_1" type="driver.py" />
-  <include file="$(find trike)/launch/trike_perception.launch"/>
-</launch>
