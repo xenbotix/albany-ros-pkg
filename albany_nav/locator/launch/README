@@ -1,7 +1,0 @@
-SETUP
-
-Copy the data folder to <ar_pose>/data
-
-USAGE
-
-Start ar_pose_ils.launch
